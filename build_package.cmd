@@ -34,7 +34,7 @@ if exist "c:\Program Files\7-Zip\7za.exe" (
     goto done_sevenzip
 )
 
-if NOT DEFINED SEVENZIP (
+if not defined SEVENZIP (
     echo 7zip not found
     exit /b 1
 )
@@ -49,5 +49,6 @@ echo Using "%SEVENZIP%" to pack
     -tzip "%PACKAGE_NAME%.keypirinha-package" ^
     -x!%~nx0 ^
     -xr!.git ^
+    -x@.gitignore ^
     -x!.gitignore ^
     *

@@ -84,18 +84,42 @@ class AppXPackage(object):
     def _get_resource(install_location, package_id, resource):
         """Helper method to resolve resource strings to their (localized) value
         """
-        if not resource.startswith('ms-resource:'):
-            return None
-        resource_descriptor = '@{{{}\\resources.pri? ms-resource://{}/resources/{}}}'.format(install_location,
-                                                                                             package_id,
-                                                                                             resource[len('ms-resource:'):])
-        input = ct.create_unicode_buffer(resource_descriptor)
-        output = ct.create_unicode_buffer(1024)
-        result = SHLoadIndirectString(input, output, ct.sizeof(output), None)
-        if result == 0:
-            return output.value
-        else:
-            return None
+        try:
+            resource_descriptor = None
+            if resource.startswith('ms-resource:/'):
+                resource_descriptor = '@{{{}\\resources.pri? {}}}'.format(install_location,
+                                                                          resource)
+            elif resource.startswith('ms-resource:'):
+                resource_descriptor = '@{{{}\\resources.pri? ms-resource://{}/resources/{}}}'.format(install_location,
+                                                                                                     package_id,
+                                                                                                     resource[len('ms-resource:'):])
+            if resource_descriptor is None:
+                return None
+
+            input = ct.create_unicode_buffer(resource_descriptor)
+            output = ct.create_unicode_buffer(1024)
+            result = SHLoadIndirectString(input, output, ct.sizeof(output), None)
+            if result == 0:
+                return output.value
+            else:
+                return None
+        except OSError:
+            pass
+
+        try:
+            resource_descriptor = '@{{{}\\resources.pri? ms-resource://{}}}'.format(install_location,
+                                                                                    resource[len('ms-resource:'):])
+            input = ct.create_unicode_buffer(resource_descriptor)
+            output = ct.create_unicode_buffer(1024)
+            result = SHLoadIndirectString(input, output, ct.sizeof(output), None)
+            if result == 0:
+                return output.value
+            else:
+                return None
+        except OSError:
+            pass
+
+        return None
 
 
 class AppX(object):

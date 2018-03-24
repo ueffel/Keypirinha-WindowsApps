@@ -21,9 +21,14 @@ class AppXPackage(object):
         self.Name = property_dict['Name'] if 'Name' in property_dict else None
         self.InstallLocation = property_dict['InstallLocation'] if 'InstallLocation' in property_dict else None
         self.PackageFamilyName = property_dict['PackageFamilyName'] if 'PackageFamilyName' in property_dict else None
-        self.applications = self._get_applications()
+        self.applications = []
 
-    def _get_applications(self):
+    async def apps(self):
+        if not self.applications:
+            self.applications = await self._get_applications()
+        return self.applications
+
+    async def _get_applications(self):
         """Reads the manifest of the package and extracts name, description, applications and logos
         """
         manifest_path = os.path.join(self.InstallLocation, 'AppxManifest.xml')

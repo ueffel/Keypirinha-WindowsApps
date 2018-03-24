@@ -4,6 +4,7 @@ import subprocess
 import os
 import glob
 import time
+import asyncio
 
 from .lib import helper
 
@@ -16,7 +17,7 @@ class WindowsApps(kp.Plugin):
         """Default constructor and initializing internal attributes
         """
         super().__init__()
-        self._debug = False
+        self._debug = True
 
     def _get_icon(self, name, icon_path):
         """Create a list of possible logo files to show as icon for a window app
@@ -67,7 +68,7 @@ class WindowsApps(kp.Plugin):
                                        shell=False,
                                        startupinfo=startupinfo).communicate()
 
-        catalog = []
+        tasks = []
         # packages a separated by a double newline within the output
         for package in output.strip().split('\n\n'):
             # collect all the properties into a dict
@@ -77,27 +78,38 @@ class WindowsApps(kp.Plugin):
                 key = line[:idx].strip()
                 value = line[idx+1:].strip()
                 props[key] = value
-            app = helper.AppXPackage(props)
 
-            # some packages can be just libraries with no executable application
-            # only take packages which have a application
-            if app.applications:
-                catalog_item = self.create_item(
-                    category=kp.ItemCategory.CMDLINE,
-                    label='Windows App: {}'.format(app.applications[0].display_name),
-                    short_desc=app.applications[0].description
-                    if app.applications[0].description is not None else app.applications[0].display_name,
-                    target=app.applications[0].execution,
-                    args_hint=kp.ItemArgsHint.FORBIDDEN,
-                    hit_hint=kp.ItemHitHint.NOARGS,
-                    icon_handle=self._get_icon(app.Name, app.applications[0].icon_path)
-                )
-                catalog.append(catalog_item)
-                self.dbg(app.InstallLocation)
+            tasks.append(self._create_catalog_item(props))
 
+        loop = asyncio.new_event_loop()
+        finished, pending = loop.run_until_complete(asyncio.wait(tasks))
+        loop.close()
+
+        catalog = [item.result() for item in finished if item.result() is not None]
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
+
+    async def _create_catalog_item(self, props):
+        app = helper.AppXPackage(props)
+        # some packages can be just libraries with no executable application
+        # only take packages which have a application
+        apps = await app.apps()
+        if apps:
+            catalog_item = self.create_item(
+                category=kp.ItemCategory.CMDLINE,
+                label='Windows App: {}'.format(apps[0].display_name),
+                short_desc=apps[0].description
+                if apps[0].description is not None else apps[0].display_name,
+                target=apps[0].execution,
+                args_hint=kp.ItemArgsHint.FORBIDDEN,
+                hit_hint=kp.ItemHitHint.NOARGS,
+                icon_handle=self._get_icon(app.Name, apps[0].icon_path)
+            )
+            self.dbg(app.InstallLocation)
+            return catalog_item
+        else:
+            return None
 
     def on_execute(self, item, action):
         """Starts the windows app

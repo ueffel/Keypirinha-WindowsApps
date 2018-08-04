@@ -6,13 +6,13 @@ Universal Windows Apps (formerly known as Metro Apps) for launching.
 
 ## Usage
 
-All items are prefixed with "Windows App:".
+All items are prefixed with `Windows App:` (configurable).
 
 ## Installation
 
 ### With [PackageControl](https://github.com/ueffel/Keypirinha-PackageControl)
 
-* Install Package "Keypirinha-WindowsApps"
+Install Package "Keypirinha-WindowsApps"
 
 ### Manually
 

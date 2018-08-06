@@ -19,7 +19,7 @@ class WindowsApps(kp.Plugin):
         """
         super().__init__()
         self._item_label = self.DEFAULT_ITEM_LABEL
-        self._debug = True
+        self._debug = False
 
     def _get_icon(self, name, icon_path):
         """Create a list of possible logo files to show as icon for a window app

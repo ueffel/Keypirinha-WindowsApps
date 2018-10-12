@@ -12,14 +12,13 @@ class WindowsApps(kp.Plugin):
     """Lists Universal Windows Apps (formerly Metro Apps) in Keypirinha for launching
     """
 
-    DEFAULT_ITEM_LABEL = 'Windows App:'
+    DEFAULT_ITEM_LABEL = "Windows App:"
 
     def __init__(self):
         """Default constructor and initializing internal attributes
         """
         super().__init__()
         self._item_label = self.DEFAULT_ITEM_LABEL
-        self._debug = False
 
     def _get_icon(self, name, icon_path):
         """Create a list of possible logo files to show as icon for a window app
@@ -27,8 +26,8 @@ class WindowsApps(kp.Plugin):
         base_path = os.path.splitext(icon_path)
         logos = []
         logos.extend(glob.glob(icon_path))
-        logos.extend(glob.glob('{}.scale-*{}'.format(base_path[0], base_path[1])))
-        logos.extend(glob.glob('{}/scale-*/{}{}'.format(os.path.dirname(base_path[0]),
+        logos.extend(glob.glob("{}.scale-*{}".format(base_path[0], base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/{}{}".format(os.path.dirname(base_path[0]),
                                                         os.path.basename(base_path[0]),
                                                         base_path[1])))
         if logos:
@@ -46,10 +45,10 @@ class WindowsApps(kp.Plugin):
                 os.mkdir(out_dir)
             out_path = os.path.join(out_dir, os.path.basename(logo))
             if not os.path.isfile(out_path):
-                with open(logo, 'rb') as in_file, \
-                        open(out_path, 'wb') as out_file:
+                with open(logo, "rb") as in_file, \
+                        open(out_path, "wb") as out_file:
                     out_file.write(in_file.read())
-            cached_logos.append('cache://{}/{}/{}'.format(self.package_full_name(),
+            cached_logos.append("cache://{}/{}/{}".format(self.package_full_name(),
                                                           name,
                                                           os.path.basename(logo)))
         return cached_logos
@@ -59,6 +58,8 @@ class WindowsApps(kp.Plugin):
         """
         self.dbg("Reading config")
         settings = self.load_settings()
+
+        self._debug = settings.get_bool("debug", "main", False)
 
         self._item_label = settings.get("item_label", "main", self.DEFAULT_ITEM_LABEL)
         self.dbg("item_label =", self._item_label)
@@ -83,8 +84,8 @@ class WindowsApps(kp.Plugin):
         start_time = time.time()
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        output, err = subprocess.Popen(['powershell.exe',
-                                        'mode con cols=512; Get-AppxPackage'],
+        output, err = subprocess.Popen(["powershell.exe",
+                                        "mode con cols=512; Get-AppxPackage"],
                                        stdout=subprocess.PIPE,
                                        universal_newlines=True,
                                        shell=False,
@@ -92,7 +93,7 @@ class WindowsApps(kp.Plugin):
 
         tasks = []
         # packages a separated by a double newline within the output
-        for package in output.strip().split('\n\n'):
+        for package in output.strip().split("\n\n"):
             # collect all the properties into a dict
             props = {}
             for line in package.splitlines():
@@ -136,5 +137,5 @@ class WindowsApps(kp.Plugin):
     def on_execute(self, item, action):
         """Starts the windows app
         """
-        self.dbg('Executing:', item.target())
-        kpu.shell_execute('explorer.exe', item.target())
+        self.dbg("Executing:", item.target())
+        kpu.shell_execute("explorer.exe", item.target())

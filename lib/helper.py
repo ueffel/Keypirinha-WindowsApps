@@ -7,6 +7,7 @@ SHLoadIndirectString = ct.windll.shlwapi.SHLoadIndirectString
 SHLoadIndirectString.argtypes = [ct.c_wchar_p, ct.c_wchar_p, ct.c_uint, ct.POINTER(ct.c_void_p)]
 SHLoadIndirectString.restype = ct.HRESULT
 
+RESOURCE_PREFIX = 'ms-resource:'
 
 class AppXPackage(object):
     """Represents a windows app package
@@ -46,81 +47,139 @@ class AppXPackage(object):
         package_identity = None
         package_identity_node = manifest.find("./default:Identity", ns)
         if package_identity_node is not None:
-            package_identity = package_identity_node.get("Name")
+            package_identity = package_identity_node.get("Name").strip()
 
-        description = None
-        description_node = manifest.find("./default:Properties/default:Description", ns)
-        if description_node is not None:
-            description = description_node.text
+        package_description = None
+        default_description_node = manifest.find("./default:Properties/default:Description", ns)
+        if default_description_node is not None:
+            package_description = default_description_node.text.strip()
 
-        display_name = None
-        display_name_node = manifest.find("./default:Properties/default:DisplayName", ns)
-        if display_name_node is not None:
-            display_name = display_name_node.text
+        package_display_name = None
+        default_display_name_node = manifest.find("./default:Properties/default:DisplayName", ns)
+        if default_display_name_node is not None:
+            package_display_name = default_display_name_node.text.strip()
 
-        icon_path = None
+        package_icon_path = None
         logo_node = manifest.find("./default:Properties/default:Logo", ns)
         if logo_node is not None:
             logo = logo_node.text
-            icon_path = os.path.join(self.InstallLocation, logo)
+            package_icon_path = os.path.join(self.InstallLocation, logo)
 
         for application in package_applications:
-            if display_name and display_name.startswith("ms-resource:"):
-                resource = self._get_resource(self.InstallLocation, package_identity, display_name)
-                if resource is not None:
-                    display_name = resource
-                else:
-                    continue
+            app_display_name = None
+            app_description = None
+            app_icon_path = None
+            app_misc = False
 
-            if description and description.startswith("ms-resource:"):
-                resource = self._get_resource(self.InstallLocation, package_identity, description)
-                if resource is not None:
-                    description = resource
-                else:
-                    continue
+            visual_elements = application.findall("./*[@DisplayName]", ns)
+            if visual_elements:
+                for visual_element in visual_elements:
+                    if 'AppListEntry' in visual_element.attrib:
+                        app_misc = visual_element.get('AppListEntry') == "none"
 
-            apps.append(AppX("shell:AppsFolder\{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                             display_name,
-                             description,
-                             icon_path))
+                    app_display_name = visual_element.get('DisplayName').strip()
+                    app_description = visual_element.get('Description').strip()
+                    app_icon_path = os.path.join(self.InstallLocation, visual_element.get('Square150x150Logo'))
+
+                    if display_name and display_name.startswith(RESOURCE_PREFIX):
+                        resource = self._get_resource(self.InstallLocation, package_identity, app_display_name)
+                        if resource is not None:
+                            display_name = resource
+
+                    if app_description and app_description.startswith(RESOURCE_PREFIX):
+                        resource = self._get_resource(self.InstallLocation, package_identity, app_description)
+                        if resource is not None:
+                            app_description = resource
+                    
+                    break # there should only be one visual_element 
+                
+
+            if (not app_display_name) or app_display_name.startswith(RESOURCE_PREFIX):
+                if package_display_name and package_display_name.startswith(RESOURCE_PREFIX):
+                    resource = self._get_resource(self.InstallLocation, package_identity, package_display_name)
+                    if resource is not None:
+                        package_display_name = resource
+                    else:
+                        continue
+                if package_display_name and not package_display_name.startswith(RESOURCE_PREFIX):
+                    app_display_name = package_display_name
+                
+            if (not app_description) or app_description.startswith(RESOURCE_PREFIX):
+                if package_description and package_description.startswith(RESOURCE_PREFIX):
+                    resource = self._get_resource(self.InstallLocation, package_identity, package_description)
+                    if resource is not None:
+                        package_description = resource
+
+                if package_description and not package_description.startswith(RESOURCE_PREFIX):
+                    app_description = package_description
+
+            if not app_icon_path:
+                app_icon_path = package_icon_path
+
+            apps.append(AppX("shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                            app_display_name,
+                            app_description,
+                            app_icon_path,
+                            "{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                            app_misc))
         return apps
 
     @staticmethod
     def _get_resource(install_location, package_id, resource):
         """Helper method to resolve resource strings to their (localized) value
         """
+        # testing slightly better working resolver
+        try:
+            if resource[0:12] == RESOURCE_PREFIX:
+                subpath = resource[12:]
+                if subpath.startswith("//"):
+                    resource_subpath = RESOURCE_PREFIX + subpath
+                elif subpath.startswith("/"):
+                    resource_subpath = RESOURCE_PREFIX + "//" + subpath
+                elif subpath.find('/') != -1:
+                    resource_subpath = RESOURCE_PREFIX + "/" + subpath
+                else:
+                    resource_subpath = RESOURCE_PREFIX + "///resources/" + subpath
+
+                resource_descriptor = '@{{{}\\resources.pri? {}}}'.format(install_location,resource_subpath)
+
+                inp = ct.create_unicode_buffer(resource_descriptor)
+                output = ct.create_unicode_buffer(1024)
+                result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+                if result == 0 and output.value:
+                    if not output.value.startswith(RESOURCE_PREFIX):
+                        return output.value
+        except OSError:
+            pass
+
         try:
             resource_descriptor = None
             if resource.startswith("ms-resource:/"):
                 resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location,
                                                                           resource)
-            elif resource.startswith("ms-resource:"):
+            elif resource.startswith(RESOURCE_PREFIX):
                 resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}/resources/{}}}".format(install_location,
                                                                                                      package_id,
-                                                                                                     resource[len("ms-resource:"):])
-            if resource_descriptor is None:
-                return None
-
-            inp = ct.create_unicode_buffer(resource_descriptor)
-            output = ct.create_unicode_buffer(1024)
-            result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-            if result == 0:
-                return output.value
-            else:
-                return None
+                                                                                                     resource[len(RESOURCE_PREFIX):])
+            if not resource_descriptor:
+                inp = ct.create_unicode_buffer(resource_descriptor)
+                output = ct.create_unicode_buffer(1024)
+                result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+                if result == 0 and output.value:
+                    if not output.value.startswith(RESOURCE_PREFIX):
+                        return output.value
         except OSError:
             pass
 
         try:
             resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}}}".format(install_location,
-                                                                                    resource[len("ms-resource:"):])
-            input = ct.create_unicode_buffer(resource_descriptor)
+                                                                                    resource[len(RESOURCE_PREFIX):])
+            inp = ct.create_unicode_buffer(resource_descriptor)
             output = ct.create_unicode_buffer(1024)
             result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-            if result == 0:
-                return output.value
-            else:
-                return None
+            if result == 0 and output.value:
+                if not output.value.startswith(RESOURCE_PREFIX):
+                    return output.value
         except OSError:
             pass
 
@@ -130,8 +189,10 @@ class AppXPackage(object):
 class AppX(object):
     """Represents an executable application from a windows app package
     """
-    def __init__(self, execution=None, display_name=None, description=None, icon_path=None):
+    def __init__(self, execution=None, display_name=None, description=None, icon_path=None, name=None, misc=False):
         self.execution = execution
         self.display_name = display_name
         self.description = description
         self.icon_path = icon_path
+        self.name = name
+        self.misc = misc

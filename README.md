@@ -7,6 +7,7 @@ Universal Windows Apps (formerly known as Metro Apps) for launching.
 ## Usage
 
 All items are prefixed with `Windows App:` (configurable).
+Miscellaneous items are hidden by default.
 
 ## Installation
 

@@ -13,6 +13,7 @@ class WindowsApps(kp.Plugin):
     """
 
     DEFAULT_ITEM_LABEL = "Windows App:"
+    DEFAULT_SHOW_MISC = False
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -64,6 +65,8 @@ class WindowsApps(kp.Plugin):
         self._item_label = settings.get("item_label", "main", self.DEFAULT_ITEM_LABEL)
         self.dbg("item_label =", self._item_label)
 
+        self._show_misc = settings.get_bool("show_misc", "main", self.DEFAULT_SHOW_MISC)
+
     def on_start(self):
         """Reads the config
         """
@@ -108,31 +111,34 @@ class WindowsApps(kp.Plugin):
         finished, pending = loop.run_until_complete(asyncio.wait(tasks))
         loop.close()
 
-        catalog = [item.result() for item in finished if item.result() is not None]
+        subcatalogs = [items.result() for items in finished if items.result() is not None]
+        catalog = [item for items in subcatalogs for item in items]
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
 
     async def _create_catalog_item(self, props):
-        app = helper.AppXPackage(props)
+        pack = helper.AppXPackage(props)
         # some packages can be just libraries with no executable application
         # only take packages which have a application
-        apps = await app.apps()
+        apps = await pack.apps()
+        catalog_items = []
         if apps:
-            catalog_item = self.create_item(
-                category=kp.ItemCategory.CMDLINE,
-                label='{} {}'.format(self._item_label, apps[0].display_name),
-                short_desc=apps[0].description
-                if apps[0].description is not None else apps[0].display_name,
-                target=apps[0].execution,
-                args_hint=kp.ItemArgsHint.FORBIDDEN,
-                hit_hint=kp.ItemHitHint.NOARGS,
-                icon_handle=self._get_icon(app.Name, apps[0].icon_path)
-            )
-            self.dbg(app.InstallLocation)
-            return catalog_item
-        else:
-            return None
+            self.dbg(pack.InstallLocation)
+            for app in apps:
+                if (not app.misc) or self._show_misc:
+                    catalog_items.append(self.create_item(
+                        category=kp.ItemCategory.CMDLINE,
+                        label='{} {}'.format(self._item_label, app.display_name).strip(),
+                        short_desc=app.description
+                        if app.description is not None else app.display_name,
+                        target=app.execution,
+                        args_hint=kp.ItemArgsHint.FORBIDDEN,
+                        hit_hint=kp.ItemHitHint.NOARGS,
+                        icon_handle=self._get_icon(app.name, app.icon_path)
+                    ))
+        return catalog_items
+
 
     def on_execute(self, item, action):
         """Starts the windows app

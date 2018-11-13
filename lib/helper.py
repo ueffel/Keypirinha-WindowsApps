@@ -1,5 +1,5 @@
 import os
-import xml.etree.ElementTree as etree
+import xml.etree.cElementTree as etree
 import re
 import ctypes as ct
 
@@ -44,84 +44,83 @@ class AppXPackage(object):
 
         apps = []
 
-        package_identity = None
+        package_identity = ''
         package_identity_node = manifest.find("./default:Identity", ns)
         if package_identity_node is not None:
             package_identity = package_identity_node.get("Name").strip()
 
-        package_description = None
+        package_description = ''
         default_description_node = manifest.find("./default:Properties/default:Description", ns)
         if default_description_node is not None:
             package_description = default_description_node.text.strip()
 
-        package_display_name = None
+        package_display_name = ''
         default_display_name_node = manifest.find("./default:Properties/default:DisplayName", ns)
         if default_display_name_node is not None:
             package_display_name = default_display_name_node.text.strip()
 
-        package_icon_path = None
+        package_icon_path = ''
         logo_node = manifest.find("./default:Properties/default:Logo", ns)
         if logo_node is not None:
             logo = logo_node.text
             package_icon_path = os.path.join(self.InstallLocation, logo)
 
         for application in package_applications:
-            app_display_name = None
-            app_description = None
-            app_icon_path = None
+            app_display_name = ''
+            app_description = ''
+            app_icon_path = ''
             app_misc = False
 
             visual_elements = application.findall("./*[@DisplayName]", ns)
             if visual_elements:
                 for visual_element in visual_elements:
-                    if 'AppListEntry' in visual_element.attrib:
-                        app_misc = visual_element.get('AppListEntry') == "none"
+                    app_misc = (visual_element.get('AppListEntry') == "none") if 'AppListEntry' in visual_element.attrib else False
 
                     app_display_name = visual_element.get('DisplayName').strip()
                     app_description = visual_element.get('Description').strip()
                     app_icon_path = os.path.join(self.InstallLocation, visual_element.get('Square150x150Logo'))
 
-                    if display_name and display_name.startswith(RESOURCE_PREFIX):
+                    if app_display_name.startswith(RESOURCE_PREFIX):
                         resource = self._get_resource(self.InstallLocation, package_identity, app_display_name)
-                        if resource is not None:
-                            display_name = resource
+                        if resource:
+                            app_display_name = resource
 
-                    if app_description and app_description.startswith(RESOURCE_PREFIX):
+                    if app_description.startswith(RESOURCE_PREFIX):
                         resource = self._get_resource(self.InstallLocation, package_identity, app_description)
-                        if resource is not None:
+                        if resource:
                             app_description = resource
-                    
-                    break # there should only be one visual_element 
-                
 
-            if (not app_display_name) or app_display_name.startswith(RESOURCE_PREFIX):
-                if package_display_name and package_display_name.startswith(RESOURCE_PREFIX):
+                    break # there should only be one visual_element
+
+
+            if app_display_name.startswith(RESOURCE_PREFIX):
+                if package_display_name.startswith(RESOURCE_PREFIX):
                     resource = self._get_resource(self.InstallLocation, package_identity, package_display_name)
-                    if resource is not None:
+                    if resource:
                         package_display_name = resource
                     else:
                         continue
-                if package_display_name and not package_display_name.startswith(RESOURCE_PREFIX):
+                if not package_display_name.startswith(RESOURCE_PREFIX):
                     app_display_name = package_display_name
-                
+
             if (not app_description) or app_description.startswith(RESOURCE_PREFIX):
-                if package_description and package_description.startswith(RESOURCE_PREFIX):
+                if package_description.startswith(RESOURCE_PREFIX):
                     resource = self._get_resource(self.InstallLocation, package_identity, package_description)
-                    if resource is not None:
+                    if resource:
                         package_description = resource
 
-                if package_description and not package_description.startswith(RESOURCE_PREFIX):
+                if not package_description.startswith(RESOURCE_PREFIX):
                     app_description = package_description
 
             if not app_icon_path:
                 app_icon_path = package_icon_path
 
-            apps.append(AppX("shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                            app_display_name,
-                            app_description,
-                            app_icon_path,
-                            "{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                            app_misc))
+            apps.append(AppX(execution="shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                            display_name=app_display_name,
+                            description=app_description,
+                            icon_path=app_icon_path,
+                            app_id="{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                            misc_app=app_misc))
         return apps
 
     @staticmethod
@@ -131,17 +130,17 @@ class AppXPackage(object):
         # testing slightly better working resolver
         try:
             if resource[0:12] == RESOURCE_PREFIX:
-                subpath = resource[12:]
-                if subpath.startswith("//"):
-                    resource_subpath = RESOURCE_PREFIX + subpath
-                elif subpath.startswith("/"):
-                    resource_subpath = RESOURCE_PREFIX + "//" + subpath
-                elif subpath.find('/') != -1:
-                    resource_subpath = RESOURCE_PREFIX + "/" + subpath
+                resource_key = resource[12:]
+                if resource_key.startswith("//"):
+                    resource_path = RESOURCE_PREFIX + resource_key
+                elif resource_key.startswith("/"):
+                    resource_path = RESOURCE_PREFIX + "//" + resource_key
+                elif resource_key.find('/') != -1:
+                    resource_path = RESOURCE_PREFIX + "/" + resource_key
                 else:
-                    resource_subpath = RESOURCE_PREFIX + "///resources/" + subpath
+                    resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
 
-                resource_descriptor = '@{{{}\\resources.pri? {}}}'.format(install_location,resource_subpath)
+                resource_descriptor = '@{{{}\\resources.pri? {}}}'.format(install_location,resource_path)
 
                 inp = ct.create_unicode_buffer(resource_descriptor)
                 output = ct.create_unicode_buffer(1024)
@@ -189,10 +188,10 @@ class AppXPackage(object):
 class AppX(object):
     """Represents an executable application from a windows app package
     """
-    def __init__(self, execution=None, display_name=None, description=None, icon_path=None, name=None, misc=False):
+    def __init__(self, execution=None, display_name=None, description=None, icon_path=None, app_id=None, misc_app=False):
         self.execution = execution
         self.display_name = display_name
         self.description = description
         self.icon_path = icon_path
-        self.name = name
-        self.misc = misc
+        self.app_id = app_id
+        self.misc_app = misc_app

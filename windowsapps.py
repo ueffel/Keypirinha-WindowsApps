@@ -13,7 +13,7 @@ class WindowsApps(kp.Plugin):
     """
 
     DEFAULT_ITEM_LABEL = "Windows App:"
-    DEFAULT_SHOW_MISC = False
+    DEFAULT_SHOW_MISC_APPS = False
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -65,7 +65,7 @@ class WindowsApps(kp.Plugin):
         self._item_label = settings.get("item_label", "main", self.DEFAULT_ITEM_LABEL)
         self.dbg("item_label =", self._item_label)
 
-        self._show_misc = settings.get_bool("show_misc", "main", self.DEFAULT_SHOW_MISC)
+        self._show_misc_apps = settings.get_bool("show_misc_apps", "main", self.DEFAULT_SHOW_MISC_APPS)
 
     def on_start(self):
         """Reads the config
@@ -126,16 +126,16 @@ class WindowsApps(kp.Plugin):
         if apps:
             self.dbg(pack.InstallLocation)
             for app in apps:
-                if (not app.misc) or self._show_misc:
+                if not app.misc_app or self._show_misc_apps:
                     catalog_items.append(self.create_item(
                         category=kp.ItemCategory.CMDLINE,
                         label='{} {}'.format(self._item_label, app.display_name).strip(),
                         short_desc=app.description
-                        if app.description is not None else app.display_name,
+                        if app.description else app.display_name,
                         target=app.execution,
                         args_hint=kp.ItemArgsHint.FORBIDDEN,
                         hit_hint=kp.ItemHitHint.NOARGS,
-                        icon_handle=self._get_icon(app.name, app.icon_path)
+                        icon_handle=self._get_icon(app.app_id, app.icon_path)
                     ))
         return catalog_items
 

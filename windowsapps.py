@@ -118,13 +118,13 @@ class WindowsApps(kp.Plugin):
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
 
     async def _create_catalog_item(self, props):
-        pack = helper.AppXPackage(props)
+        package = helper.AppXPackage(props)
         # some packages can be just libraries with no executable application
         # only take packages which have a application
-        apps = await pack.apps()
+        apps = await package.apps()
         catalog_items = []
         if apps:
-            self.dbg(pack.InstallLocation)
+            self.dbg(package.InstallLocation)
             for app in apps:
                 if not app.misc_app or self._show_misc_apps:
                     catalog_items.append(self.create_item(

@@ -1,7 +1,6 @@
-Keypirinha WindowsApps
-==========================
+# Keypirinha WindowsApps
 
-This is a package for the fast keystroke launcher keypirinha (http://keypirinha.com/). It lists
+This is a package for the fast keystroke launcher keypirinha (<http://keypirinha.com/>). It lists
 Universal Windows Apps (formerly known as Metro Apps) for launching.
 
 ## Usage

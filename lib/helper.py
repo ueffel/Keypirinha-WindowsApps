@@ -127,7 +127,7 @@ class AppXPackage(object):
     def _get_resource(install_location, package_id, resource):
         """Helper method to resolve resource strings to their (localized) value
         """
-        # testing slightly better working resolver
+        # testing more compact working resolver
         try:
             if resource[0:12] == RESOURCE_PREFIX:
                 resource_key = resource[12:]
@@ -151,36 +151,36 @@ class AppXPackage(object):
         except OSError:
             pass
 
-        try:
-            resource_descriptor = None
-            if resource.startswith("ms-resource:/"):
-                resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location,
-                                                                          resource)
-            elif resource.startswith(RESOURCE_PREFIX):
-                resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}/resources/{}}}".format(install_location,
-                                                                                                     package_id,
-                                                                                                     resource[len(RESOURCE_PREFIX):])
-            if not resource_descriptor:
-                inp = ct.create_unicode_buffer(resource_descriptor)
-                output = ct.create_unicode_buffer(1024)
-                result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-                if result == 0 and output.value:
-                    if not output.value.startswith(RESOURCE_PREFIX):
-                        return output.value
-        except OSError:
-            pass
+        # try:
+        #     resource_descriptor = None
+        #     if resource.startswith("ms-resource:/"):
+        #         resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location,
+        #                                                                   resource)
+        #     elif resource.startswith(RESOURCE_PREFIX):
+        #         resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}/resources/{}}}".format(install_location,
+        #                                                                                              package_id,
+        #                                                                                              resource[len(RESOURCE_PREFIX):])
+        #     if resource_descriptor:
+        #         inp = ct.create_unicode_buffer(resource_descriptor)
+        #         output = ct.create_unicode_buffer(1024)
+        #         result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+        #         if result == 0 and output.value:
+        #             if not output.value.startswith(RESOURCE_PREFIX):
+        #                 return output.value
+        # except OSError:
+        #     pass
 
-        try:
-            resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}}}".format(install_location,
-                                                                                    resource[len(RESOURCE_PREFIX):])
-            inp = ct.create_unicode_buffer(resource_descriptor)
-            output = ct.create_unicode_buffer(1024)
-            result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-            if result == 0 and output.value:
-                if not output.value.startswith(RESOURCE_PREFIX):
-                    return output.value
-        except OSError:
-            pass
+        # try:
+        #     resource_descriptor = "@{{{}\\resources.pri? ms-resource://{}}}".format(install_location,
+        #                                                                             resource[len(RESOURCE_PREFIX):])
+        #     inp = ct.create_unicode_buffer(resource_descriptor)
+        #     output = ct.create_unicode_buffer(1024)
+        #     result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+        #     if result == 0 and output.value:
+        #         if not output.value.startswith(RESOURCE_PREFIX):
+        #             return output.value
+        # except OSError:
+        #     pass
 
         return None
 

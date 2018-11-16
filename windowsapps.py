@@ -6,6 +6,7 @@ import os
 import glob
 import time
 import asyncio
+import traceback
 
 
 class WindowsApps(kp.Plugin):
@@ -95,6 +96,8 @@ class WindowsApps(kp.Plugin):
                                        startupinfo=startupinfo).communicate()
 
         tasks = []
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         # packages a separated by a double newline within the output
         for package in output.strip().split("\n\n"):
             # collect all the properties into a dict
@@ -105,40 +108,54 @@ class WindowsApps(kp.Plugin):
                 value = line[idx+1:].strip()
                 props[key] = value
 
-            tasks.append(self._create_catalog_item(props))
+            tasks.append(asyncio.ensure_future(self._create_catalog_item(props)))
 
-        loop = asyncio.new_event_loop()
-        finished, pending = loop.run_until_complete(asyncio.wait(tasks))
+        job = asyncio.gather(*tasks, return_exceptions=True)
+        loop.run_until_complete(job)
         loop.close()
 
-        subcatalogs = [items.result() for items in finished if items.result() is not None]
-        catalog = [item for items in subcatalogs for item in items]
+        catalog = []
+        for task in tasks:
+            exc = task.exception()
+            if exc:
+                self.warn(exc)
+                self.dbg("".join(traceback.format_exception(exc.__class__, exc, exc.__traceback__)))
+                continue
+            items = task.result()
+            if items:
+                catalog.extend(items)
+
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
 
     async def _create_catalog_item(self, props):
-        package = helper.AppXPackage(props)
-        # some packages can be just libraries with no executable application
-        # only take packages which have a application
-        apps = await package.apps()
-        catalog_items = []
-        if apps:
-            self.dbg(package.InstallLocation)
-            for app in apps:
-                if not app.misc_app or self._show_misc_apps:
-                    catalog_items.append(self.create_item(
-                        category=kp.ItemCategory.CMDLINE,
-                        label='{} {}'.format(self._item_label, app.display_name).strip(),
-                        short_desc=app.description
-                        if app.description else app.display_name,
-                        target=app.execution,
-                        args_hint=kp.ItemArgsHint.FORBIDDEN,
-                        hit_hint=kp.ItemHitHint.NOARGS,
-                        icon_handle=self._get_icon(app.app_id, app.icon_path)
-                    ))
-        return catalog_items
-
+        try:
+            package = helper.AppXPackage(props)
+            # some packages can be just libraries with no executable application
+            # only take packages which have a application
+            apps = await package.apps()
+            catalog_items = []
+            if apps:
+                self.dbg(package.InstallLocation)
+                for app in apps:
+                    if not app.misc_app or self._show_misc_apps:
+                        catalog_items.append(self.create_item(
+                            category=kp.ItemCategory.CMDLINE,
+                            label="{} {}".format(self._item_label, app.display_name).strip(),
+                            short_desc=app.description
+                            if app.description else app.display_name,
+                            target=app.execution,
+                            args_hint=kp.ItemArgsHint.FORBIDDEN,
+                            hit_hint=kp.ItemHitHint.NOARGS,
+                            icon_handle=self._get_icon(app.app_id, app.icon_path)
+                        ))
+            return catalog_items
+        except Exception as exc:
+            if "Name" in props:
+                raise Exception("Error while creating catalog item for '{0}'".format(props["Name"])) from exc
+            else:
+                raise Exception("Error while creating catalog item for {0}".format(props)) from exc
 
     def on_execute(self, item, action):
         """Starts the windows app

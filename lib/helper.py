@@ -73,7 +73,9 @@ class AppXPackage(object):
 
             visual_elements = application.find("./*[@DisplayName]", ns)
             if visual_elements:
-                default_tile = visual_elements.find("./*[@*Logo]", ns)
+                default_tile = visual_elements.find("./*[@Square310x310Logo]", ns)
+                if not default_tile:
+                    default_tile = visual_elements.find("./*[@ShortName]", ns)
                 
                 app_misc = visual_elements.get("AppListEntry") == "none" \
                     if "AppListEntry" in visual_elements.attrib else False
@@ -89,13 +91,13 @@ class AppXPackage(object):
                 wide_logos = [logo for logo in logos if "wide" in logo.lower()]
                 if square_logos:
                     biggest = max(square_logos, key=lambda x: int(re.search(r"(\d+)x\d+", x).groups()[0]))
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest))
+                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
                 if not os.path.isfile(app_icon_path) and wide_logos:
                     biggest = max(wide_logos, key=lambda x: re.search(r"(\d+)x\d+", x).groups()[0])
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest))
+                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
                 if not os.path.isfile(app_icon_path) and logos:
                     biggest = min(logos)
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest))
+                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
                 if not os.path.isfile(app_icon_path):
                     app_icon_path = package_icon_path
 
@@ -109,7 +111,7 @@ class AppXPackage(object):
                     if resource:
                         app_description = resource
 
-            if app_display_name.startswith(RESOURCE_PREFIX):
+            if not app_display_name or app_display_name.startswith(RESOURCE_PREFIX):
                 if package_display_name.startswith(RESOURCE_PREFIX):
                     resource = self._get_resource(self.InstallLocation, package_identity, package_display_name)
                     if resource:
@@ -119,7 +121,7 @@ class AppXPackage(object):
                 if not package_display_name.startswith(RESOURCE_PREFIX):
                     app_display_name = package_display_name
 
-            if (not app_description) or app_description.startswith(RESOURCE_PREFIX):
+            if not app_description or app_description.startswith(RESOURCE_PREFIX):
                 if package_description.startswith(RESOURCE_PREFIX):
                     resource = self._get_resource(self.InstallLocation, package_identity, package_description)
                     if resource:

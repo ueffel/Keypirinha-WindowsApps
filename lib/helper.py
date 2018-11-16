@@ -73,13 +73,18 @@ class AppXPackage(object):
 
             visual_elements = application.find("./*[@DisplayName]", ns)
             if visual_elements:
+                default_tile = visual_elements.find("./*[@*Logo]", ns)
+                
                 app_misc = visual_elements.get("AppListEntry") == "none" \
                     if "AppListEntry" in visual_elements.attrib else False
+                
 
                 app_display_name = visual_elements.get("DisplayName").strip()
                 app_description = visual_elements.get("Description").strip()
 
                 logos = [attr for attr in visual_elements.attrib if "logo" in attr.lower()]
+                if default_tile:
+                    logos.extend([attr for attr in default_tile.attrib if "logo" in attr.lower()])
                 square_logos = [logo for logo in logos if "square" in logo.lower()]
                 wide_logos = [logo for logo in logos if "wide" in logo.lower()]
                 if square_logos:

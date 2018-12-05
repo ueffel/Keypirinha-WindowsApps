@@ -32,6 +32,25 @@ class WindowsApps(kp.Plugin):
         logos.extend(glob.glob("{}/scale-*/{}{}".format(os.path.dirname(base_path[0]),
                                                         os.path.basename(base_path[0]),
                                                         base_path[1])))
+        logos.extend(glob.glob("{}.contrast-*{}".format(base_path[0], base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}.scale-*{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/scale-*/{}{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
+                                                        os.path.basename(base_path[0]),
+                                                        base_path[1])))
         if logos:
             cached_logos = self._copy_files(name, logos)
             handle = self.load_icon(cached_logos)

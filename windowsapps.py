@@ -15,6 +15,7 @@ class WindowsApps(kp.Plugin):
 
     DEFAULT_ITEM_LABEL = "Windows App:"
     DEFAULT_SHOW_MISC_APPS = False
+    DEFAULT_PREFERRED_CONTRAST = "black"
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -51,6 +52,15 @@ class WindowsApps(kp.Plugin):
         logos.extend(glob.glob("{}/scale-*/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
                                                         os.path.basename(base_path[0]),
                                                         base_path[1])))
+
+        logos_preferred = [logo for logo in logos if "contrast-{}".format(self._preferred_contrast) in logo]
+        if logos_preferred:
+            logos = logos_preferred
+
+        self.dbg(name)
+        for logo in logos:
+            self.dbg("{}".format(logo))
+
         if logos:
             cached_logos = self._copy_files(name, logos)
             handle = self.load_icon(cached_logos)
@@ -86,6 +96,11 @@ class WindowsApps(kp.Plugin):
         self.dbg("item_label =", self._item_label)
 
         self._show_misc_apps = settings.get_bool("show_misc_apps", "main", self.DEFAULT_SHOW_MISC_APPS)
+
+        self._preferred_contrast = settings.get_enum(
+            "preferred_contrast", "main",
+            fallback=self.DEFAULT_PREFERRED_CONTRAST,
+            enum=["black", "white"])
 
     def on_start(self):
         """Reads the config

@@ -35,23 +35,23 @@ class WindowsApps(kp.Plugin):
                                                         base_path[1])))
         logos.extend(glob.glob("{}.contrast-*{}".format(base_path[0], base_path[1])))
         logos.extend(glob.glob("{}/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                           os.path.basename(base_path[0]),
+                                                           base_path[1])))
         logos.extend(glob.glob("{}/contrast-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                                      os.path.basename(base_path[0]),
+                                                                      base_path[1])))
         logos.extend(glob.glob("{}/contrast-*/{}.scale-*{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                                   os.path.basename(base_path[0]),
+                                                                   base_path[1])))
         logos.extend(glob.glob("{}/contrast-*/scale-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                                   os.path.basename(base_path[0]),
+                                                                   base_path[1])))
         logos.extend(glob.glob("{}/scale-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                                   os.path.basename(base_path[0]),
+                                                                   base_path[1])))
         logos.extend(glob.glob("{}/scale-*/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+                                                                   os.path.basename(base_path[0]),
+                                                                   base_path[1])))
 
         logos_preferred = [logo for logo in logos if "contrast-{}".format(self._preferred_contrast) in logo]
         if logos_preferred:
@@ -96,11 +96,13 @@ class WindowsApps(kp.Plugin):
         self.dbg("item_label =", self._item_label)
 
         self._show_misc_apps = settings.get_bool("show_misc_apps", "main", self.DEFAULT_SHOW_MISC_APPS)
+        self.dbg("show_misc_apps =", self._show_misc_apps)
 
-        self._preferred_contrast = settings.get_enum(
-            "preferred_contrast", "main",
-            fallback=self.DEFAULT_PREFERRED_CONTRAST,
-            enum=["black", "white"])
+        self._preferred_contrast = settings.get_enum("preferred_contrast",
+                                                     "main",
+                                                     self.DEFAULT_PREFERRED_CONTRAST,
+                                                     ["black", "white"])
+        self.dbg("preferred_contrast =", self._preferred_contrast)
 
     def on_start(self):
         """Reads the config
@@ -139,7 +141,7 @@ class WindowsApps(kp.Plugin):
             for line in package.splitlines():
                 idx = line.index(":")
                 key = line[:idx].strip()
-                value = line[idx+1:].strip()
+                value = line[idx + 1:].strip()
                 props[key] = value
 
             tasks.append(asyncio.ensure_future(self._create_catalog_item(props)))
@@ -182,7 +184,7 @@ class WindowsApps(kp.Plugin):
                             target=app.execution,
                             args_hint=kp.ItemArgsHint.FORBIDDEN,
                             hit_hint=kp.ItemHitHint.NOARGS,
-                            icon_handle=self._get_icon(app.app_id, app.icon_path)
+                            icon_handle=self._get_icon(package.Name, app.icon_path)
                         ))
             return catalog_items
         except Exception as exc:

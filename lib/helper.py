@@ -9,6 +9,7 @@ SHLoadIndirectString.restype = ct.HRESULT
 
 RESOURCE_PREFIX = "ms-resource:"
 
+
 class AppXPackage(object):
     """Represents a windows app package
     """
@@ -36,18 +37,13 @@ class AppXPackage(object):
         if not os.path.isfile(manifest_path):
             return []
         manifest = etree.parse(manifest_path)
-        ns = {"default": re.sub(r"\{(.*?)\}.+", r"\1", manifest.getroot().tag)}
+        ns = {"default": re.sub(r"{(.*?)}.+", r"\1", manifest.getroot().tag)}
 
         package_applications = manifest.findall("./default:Applications/default:Application", ns)
         if not package_applications:
             return []
 
         apps = []
-
-        package_identity = ""
-        package_identity_node = manifest.find("./default:Identity", ns)
-        if package_identity_node is not None:
-            package_identity = package_identity_node.get("Name").strip()
 
         package_description = ""
         default_description_node = manifest.find("./default:Properties/default:Description", ns)
@@ -71,75 +67,73 @@ class AppXPackage(object):
             app_icon_path = ""
             app_misc = False
 
-            visual_elements = application.find("./*[@DisplayName]", ns)
+            visual_elements = next((elem for elem in application if elem.tag.endswith("VisualElements")), None)
             if visual_elements:
-                default_tile = visual_elements.find("./*[@Square310x310Logo]", ns)
-                if not default_tile:
-                    default_tile = visual_elements.find("./*[@ShortName]", ns)
-                
+                default_tile = next((elem for elem in visual_elements if elem.tag.endswith('DefaultTile')), None)
+
                 app_misc = visual_elements.get("AppListEntry") == "none" \
                     if "AppListEntry" in visual_elements.attrib else False
-                
 
-                app_display_name = visual_elements.get("DisplayName").strip()
-                app_description = visual_elements.get("Description").strip()
+                app_display_name = visual_elements.get("DisplayName")
+                app_description = visual_elements.get("Description")
 
-                logos = [attr for attr in visual_elements.attrib if "logo" in attr.lower()]
+                logos = {attr: visual_elements.get(attr) for attr in visual_elements.attrib if "logo" in attr.lower()}
                 if default_tile:
-                    logos.extend([attr for attr in default_tile.attrib if "logo" in attr.lower()])
-                square_logos = [logo for logo in logos if "square" in logo.lower()]
-                wide_logos = [logo for logo in logos if "wide" in logo.lower()]
+                    logos.update({attr: default_tile.get(attr) for attr in default_tile.attrib
+                                  if "logo" in attr.lower()})
+                square_logos = {key: value for key, value in logos.items() if "square" in key.lower()}
+                wide_logos = {key: value for key, value in logos.items() if "wide" in key.lower()}
+
                 if square_logos:
-                    biggest = max(square_logos, key=lambda x: int(re.search(r"(\d+)x\d+", x).groups()[0]))
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
-                if not os.path.isfile(app_icon_path) and wide_logos:
+                    biggest = max(square_logos.keys(), key=lambda x: int(re.search(r"(\d+)x\d+", x).groups()[0]))
+                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                elif not app_icon_path and wide_logos:
                     biggest = max(wide_logos, key=lambda x: re.search(r"(\d+)x\d+", x).groups()[0])
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
-                if not os.path.isfile(app_icon_path) and logos:
+                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                elif not app_icon_path and logos:
                     biggest = min(logos)
-                    app_icon_path = os.path.join(self.InstallLocation, visual_elements.get(biggest) if biggest in visual_elements.attrib else default_tile.get(biggest))
-                if not os.path.isfile(app_icon_path):
+                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                elif not app_icon_path:
                     app_icon_path = package_icon_path
 
-                if app_display_name.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_identity, app_display_name)
+                if app_display_name and app_display_name.startswith(RESOURCE_PREFIX):
+                    resource = self._get_resource(self.InstallLocation, app_display_name)
                     if resource:
                         app_display_name = resource
 
-                if app_description.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_identity, app_description)
+                if app_description and app_description.startswith(RESOURCE_PREFIX):
+                    resource = self._get_resource(self.InstallLocation, app_description)
                     if resource:
                         app_description = resource
 
-            if not app_display_name or app_display_name.startswith(RESOURCE_PREFIX):
+            if not app_display_name:
                 if package_display_name.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_identity, package_display_name)
+                    resource = self._get_resource(self.InstallLocation, package_display_name)
                     if resource:
                         package_display_name = resource
                     else:
                         continue
-                if not package_display_name.startswith(RESOURCE_PREFIX):
+                else:
                     app_display_name = package_display_name
 
-            if not app_description or app_description.startswith(RESOURCE_PREFIX):
+            if not app_description:
                 if package_description.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_identity, package_description)
+                    resource = self._get_resource(self.InstallLocation, package_description)
                     if resource:
                         package_description = resource
-
-                if not package_description.startswith(RESOURCE_PREFIX):
+                else:
                     app_description = package_description
 
             apps.append(AppX(execution="shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                            display_name=app_display_name,
-                            description=app_description,
-                            icon_path=app_icon_path,
-                            app_id="{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                            misc_app=app_misc))
+                             display_name=app_display_name,
+                             description=app_description,
+                             icon_path=app_icon_path,
+                             app_id="{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                             misc_app=app_misc))
         return apps
 
     @staticmethod
-    def _get_resource(install_location, package_id, resource):
+    def _get_resource(install_location, resource):
         """Helper method to resolve resource strings to their (localized) value
         """
         # this has resolved every resource I could find with 1 API call.
@@ -155,7 +149,7 @@ class AppXPackage(object):
                 else:
                     resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
 
-                resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location,resource_path)
+                resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location, resource_path)
 
                 inp = ct.create_unicode_buffer(resource_descriptor)
                 output = ct.create_unicode_buffer(1024)
@@ -172,7 +166,9 @@ class AppXPackage(object):
 class AppX(object):
     """Represents an executable application from a windows app package
     """
-    def __init__(self, execution=None, display_name=None, description=None, icon_path=None, app_id=None, misc_app=False):
+
+    def __init__(self, execution=None, display_name=None, description=None, icon_path=None, app_id=None,
+                 misc_app=False):
         self.execution = execution
         self.display_name = display_name
         self.description = description

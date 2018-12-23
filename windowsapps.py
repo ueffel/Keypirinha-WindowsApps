@@ -5,8 +5,6 @@ import subprocess
 import os
 import glob
 import time
-import asyncio
-import traceback
 
 
 class WindowsApps(kp.Plugin):
@@ -131,9 +129,7 @@ class WindowsApps(kp.Plugin):
                                        shell=False,
                                        startupinfo=startupinfo).communicate()
 
-        tasks = []
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        catalog = []
         # packages a separated by a double newline within the output
         for package in output.strip().split("\n\n"):
             # collect all the properties into a dict
@@ -143,34 +139,22 @@ class WindowsApps(kp.Plugin):
                 key = line[:idx].strip()
                 value = line[idx + 1:].strip()
                 props[key] = value
-
-            tasks.append(asyncio.ensure_future(self._create_catalog_item(props)))
-
-        job = asyncio.gather(*tasks, return_exceptions=True)
-        loop.run_until_complete(job)
-        loop.close()
-
-        catalog = []
-        for task in tasks:
-            exc = task.exception()
-            if exc:
-                self.warn(exc)
-                self.dbg("".join(traceback.format_exception(exc.__class__, exc, exc.__traceback__)))
+            try:
+                catalog.extend(self._create_catalog_item(props))
+            except Exception as ex:
+                self.warn(ex)
                 continue
-            items = task.result()
-            if items:
-                catalog.extend(items)
 
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
 
-    async def _create_catalog_item(self, props):
+    def _create_catalog_item(self, props):
         try:
             package = helper.AppXPackage(props)
             # some packages can be just libraries with no executable application
             # only take packages which have a application
-            apps = await package.apps()
+            apps = package.apps()
             catalog_items = []
             if apps:
                 self.dbg(package.InstallLocation)

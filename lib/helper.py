@@ -25,12 +25,12 @@ class AppXPackage(object):
         self.PackageFamilyName = property_dict["PackageFamilyName"] if "PackageFamilyName" in property_dict else None
         self.applications = []
 
-    async def apps(self):
+    def apps(self):
         if not self.applications:
-            self.applications = await self._get_applications()
+            self.applications = self._get_applications()
         return self.applications
 
-    async def _get_applications(self):
+    def _get_applications(self):
         """Reads the manifest of the package and extracts name, description, applications and logos
         """
         manifest_path = os.path.join(self.InstallLocation, "AppxManifest.xml")
@@ -100,36 +100,34 @@ class AppXPackage(object):
                     resource = self._get_resource(self.InstallLocation, app_display_name)
                     if resource:
                         app_display_name = resource
+                    else:
+                        if package_display_name and package_display_name.startswith(RESOURCE_PREFIX):
+                            resource = self._get_resource(self.InstallLocation, package_display_name)
+                            if resource:
+                                package_display_name = resource
+                                app_display_name = package_display_name
+                            else:
+                                continue
+                        else:
+                            continue
 
                 if app_description and app_description.startswith(RESOURCE_PREFIX):
                     resource = self._get_resource(self.InstallLocation, app_description)
                     if resource:
                         app_description = resource
-
-            if not app_display_name:
-                if package_display_name.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_display_name)
-                    if resource:
-                        package_display_name = resource
                     else:
-                        continue
-                else:
-                    app_display_name = package_display_name
+                        if package_description and package_description.startswith(RESOURCE_PREFIX):
+                            resource = self._get_resource(self.InstallLocation, package_description)
+                            if resource:
+                                package_description = resource
+                                app_description = package_description
 
-            if not app_description:
-                if package_description.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, package_description)
-                    if resource:
-                        package_description = resource
-                else:
-                    app_description = package_description
-
-            apps.append(AppX(execution="shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                             display_name=app_display_name,
-                             description=app_description,
-                             icon_path=app_icon_path,
-                             app_id="{}!{}".format(self.PackageFamilyName, application.get("Id")),
-                             misc_app=app_misc))
+                apps.append(AppX(execution="shell:AppsFolder\\{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                                 display_name=app_display_name,
+                                 description=app_description,
+                                 icon_path=app_icon_path,
+                                 app_id="{}!{}".format(self.PackageFamilyName, application.get("Id")),
+                                 misc_app=app_misc))
         return apps
 
     @staticmethod
@@ -144,8 +142,6 @@ class AppXPackage(object):
                     resource_path = resource
                 elif resource_key.startswith("/"):
                     resource_path = RESOURCE_PREFIX + "//" + resource_key
-                elif resource_key.find("/") != -1:
-                    resource_path = RESOURCE_PREFIX + "/" + resource_key
                 else:
                     resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
 

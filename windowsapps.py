@@ -123,6 +123,7 @@ class WindowsApps(kp.Plugin):
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         output, err = subprocess.Popen(["powershell.exe",
+                                        "-noprofile",
                                         "mode con cols=512; Get-AppxPackage"],
                                        stdout=subprocess.PIPE,
                                        universal_newlines=True,

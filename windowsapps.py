@@ -5,6 +5,7 @@ import subprocess
 import os
 import glob
 import time
+import json
 
 
 class WindowsApps(kp.Plugin):
@@ -124,24 +125,18 @@ class WindowsApps(kp.Plugin):
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         output, err = subprocess.Popen(["powershell.exe",
                                         "-noprofile",
-                                        "mode con cols=512; Get-AppxPackage"],
+                                        "Get-AppxPackage | ConvertTo-Json"],
                                        stdout=subprocess.PIPE,
                                        universal_newlines=True,
                                        shell=False,
                                        startupinfo=startupinfo).communicate()
 
         catalog = []
+        packages = json.loads(output)
         # packages a separated by a double newline within the output
-        for package in output.strip().split("\n\n"):
-            # collect all the properties into a dict
-            props = {}
-            for line in package.splitlines():
-                idx = line.index(":")
-                key = line[:idx].strip()
-                value = line[idx + 1:].strip()
-                props[key] = value
+        for package in packages:
             try:
-                catalog.extend(self._create_catalog_item(props))
+                catalog.extend(self._create_catalog_item(package))
             except Exception as ex:
                 self.warn(ex)
                 continue

@@ -2,6 +2,7 @@ import os
 import xml.etree.cElementTree as etree
 import re
 import ctypes as ct
+import glob
 
 SHLoadIndirectString = ct.windll.shlwapi.SHLoadIndirectString
 SHLoadIndirectString.argtypes = [ct.c_wchar_p, ct.c_wchar_p, ct.c_uint, ct.POINTER(ct.c_void_p)]
@@ -97,12 +98,12 @@ class AppXPackage(object):
                     app_icon_path = package_icon_path
 
                 if app_display_name and app_display_name.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, app_display_name)
+                    resource = self.get_resource(self.InstallLocation, app_display_name)
                     if resource:
                         app_display_name = resource
                     else:
                         if package_display_name and package_display_name.startswith(RESOURCE_PREFIX):
-                            resource = self._get_resource(self.InstallLocation, package_display_name)
+                            resource = self.get_resource(self.InstallLocation, package_display_name)
                             if resource:
                                 package_display_name = resource
                                 app_display_name = package_display_name
@@ -112,12 +113,12 @@ class AppXPackage(object):
                             continue
 
                 if app_description and app_description.startswith(RESOURCE_PREFIX):
-                    resource = self._get_resource(self.InstallLocation, app_description)
+                    resource = self.get_resource(self.InstallLocation, app_description)
                     if resource:
                         app_description = resource
                     else:
                         if package_description and package_description.startswith(RESOURCE_PREFIX):
-                            resource = self._get_resource(self.InstallLocation, package_description)
+                            resource = self.get_resource(self.InstallLocation, package_description)
                             if resource:
                                 package_description = resource
                                 app_description = package_description
@@ -131,30 +132,37 @@ class AppXPackage(object):
         return apps
 
     @staticmethod
-    def _get_resource(install_location, resource):
+    def get_resource(install_location, resource):
         """Helper method to resolve resource strings to their (localized) value
         """
-        # this has resolved every resource I could find with 1 API call.
-        try:
-            if resource[0:12] == RESOURCE_PREFIX:
-                resource_key = resource[12:]
-                if resource_key.startswith("//"):
-                    resource_path = resource
-                elif resource_key.startswith("/"):
-                    resource_path = RESOURCE_PREFIX + "//" + resource_key
-                else:
-                    resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
+        pri_files = []
+        pri_files.extend(glob.glob(install_location + '/*.pri'))
+        pri_files.extend(glob.glob(install_location + '/**/*.pri'))
+        # the assumption is, that localized .pri resource data files are deeper in the file tree
+        # and therefore have a longer path
+        pri_files_sorted = sorted(pri_files, key=lambda file: len(file), reverse=True)
 
-                resource_descriptor = "@{{{}\\resources.pri? {}}}".format(install_location, resource_path)
+        for pri_file in pri_files_sorted:
+            try:
+                if resource[0:12] == RESOURCE_PREFIX:
+                    resource_key = resource[12:]
+                    if resource_key.startswith("//"):
+                        resource_path = resource
+                    elif resource_key.startswith("/"):
+                        resource_path = RESOURCE_PREFIX + "//" + resource_key
+                    else:
+                        resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
 
-                inp = ct.create_unicode_buffer(resource_descriptor)
-                output = ct.create_unicode_buffer(1024)
-                result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-                if result == 0 and output.value:
-                    if not output.value.startswith(RESOURCE_PREFIX):
-                        return output.value
-        except OSError:
-            pass
+                    resource_descriptor = "@{{{}? {}}}".format(pri_file, resource_path)
+
+                    inp = ct.create_unicode_buffer(resource_descriptor)
+                    output = ct.create_unicode_buffer(1024)
+                    result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+                    if result == 0 and output.value:
+                        if not output.value.startswith(RESOURCE_PREFIX):
+                            return output.value
+            except OSError:
+                pass
 
         return None
 

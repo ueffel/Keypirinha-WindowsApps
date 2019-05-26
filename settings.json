@@ -1,0 +1,375 @@
+[
+    {
+        "settings_uri": "ms-settings:display",
+        "page_name": "SettingsPagePCSystemDisplay"
+    },
+    {
+        "settings_uri": "ms-settings:nightlight",
+        "page_name": "SystemSettingsDisplayBlueLightSettings"
+    },
+    {
+        "settings_uri": "ms-settings:display-advanced",
+        "page_name": "SystemSettingsDisplayAdvancedScalingSettings"
+    },
+    {
+        "settings_uri": "ms-settings:display-advancedgraphics",
+        "page_name": "SettingsPageGpuPreferenceView"
+    },
+    {
+        "settings_uri": "ms-settings:sound",
+        "page_name": "SettingsPageAudio"
+    },
+    {
+        "settings_uri": "ms-settings:notifications",
+        "page_name": "SettingsPageAppsNotifications"
+    },
+    {
+        "settings_uri": "ms-settings:quiethours",
+        "page_name": "SettingsPageQuietHours"
+    },
+    {
+        "settings_uri": "ms-settings:quietmomentshome",
+        "page_name": "SystemSettings_QuietMoments_On_Home_Mode"
+    },
+    {
+        "settings_uri": "ms-settings:quietmomentsscheduled",
+        "page_name": "SystemSettings_QuietMoments_On_Scheduled_Mode"
+    },
+    {
+        "settings_uri": "ms-settings:quietmomentspresentation",
+        "page_name": "SystemSettings_QuietMoments_On_Presentation_Mode"
+    },
+    {
+        "settings_uri": "ms-settings:quietmomentsgame",
+        "page_name": "SystemSettings_QuietMoments_On_Game_Mode"
+    },
+    {
+        "settings_uri": "ms-settings:powersleep",
+        "page_name": "SettingsPageScreenPowerAndSleep"
+    },
+    {
+        "settings_uri": "ms-settings:batterysaver",
+        "page_name": "SystemSettings_BatterySaver_LandingPage_SettingsLink"
+    },
+    {
+        "settings_uri": "ms-settings:batterysaver-usagedetails",
+        "page_name": "SystemSettings_BatterySaver_LandingPage_UsageDetailsLink"
+    },
+    {
+        "settings_uri": "ms-settings:batterysaver-settings",
+        "page_name": "SystemSettings_BatterySaver_UsagePage_AdvancedSettingsPageLink"
+    },
+    {
+        "settings_uri": "ms-settings:storagesense",
+        "page_name": "SettingsPageStorageSenseStorageOverview"
+    },
+    {
+        "settings_uri": "ms-settings:storagepolicies",
+        "page_name": "SystemSettings_StorageSense_SmartStoragePoliciesLink"
+    },
+    {
+        "settings_uri": "ms-settings:savelocations",
+        "page_name": "SystemSettings_StorageSense_SaveLocationsLink"
+    },
+    {
+        "settings_uri": "ms-settings:tabletmode",
+        "page_name": "SettingsPagePCSystemShellMode"
+    },
+    {
+        "settings_uri": "ms-settings:multitasking",
+        "page_name": "SettingsPageMultiTasking"
+    },
+    {
+        "settings_uri": "ms-settings:project",
+        "page_name": "SettingsPageContinuum"
+    },
+    {
+        "settings_uri": "ms-settings:crossdevice",
+        "page_name": "SettingsPagePrivacySharedExperiences"
+    },
+    {
+        "settings_uri": "ms-settings:clipboard",
+        "page_name": "SettingsPageClipboard"
+    },
+    {
+        "settings_uri": "ms-settings:remotedesktop",
+        "page_name": "SettingsPageRemoteDesktop"
+    },
+    {
+        "settings_uri": "ms-settings:about",
+        "page_name": "SettingsPagePCSystemInfo"
+    },
+    {
+        "settings_uri": "ms-settings:bluetooth",
+        "page_name": "SystemSettings_Devices_Link_Bluetooth"
+    },
+    {
+        "settings_uri": "ms-settings:connecteddevices",
+        "page_name": "SystemSettings_Devices_Link_Bluetooth"
+    },
+    {
+        "settings_uri": "ms-settings:printers",
+        "page_name": "SettingsPageDevicesPrinters"
+    },
+    {
+        "settings_uri": "ms-settings:mousetouchpad",
+        "page_name": "SettingsPagePCSystemDeviceSettings"
+    },
+    {
+        "settings_uri": "ms-settings:devices-touchpad",
+        "page_name": "SettingsPageDevicesTouchpad"
+    },
+    {
+        "settings_uri": "ms-settings:typing",
+        "page_name": "SettingsPageTimeRegionSpelling"
+    },
+    {
+        "settings_uri": "ms-settings:wheel",
+        "page_name": "SettingsPageRadialController"
+    },
+    {
+        "settings_uri": "ms-settings:pen",
+        "page_name": "SettingsPageDevicesPen"
+    },
+    {
+        "settings_uri": "ms-settings:autoplay",
+        "page_name": "SettingsPagePCSystemAutoPlay"
+    },
+    {
+        "settings_uri": "ms-settings:usb",
+        "page_name": "SettingsPageUsb"
+    },
+    {
+        "settings_uri": "ms-settings:mobile-devices",
+        "page_name": "SettingsPageManagePhone"
+    },
+    {
+        "settings_uri": "ms-settings:network-status",
+        "page_name": "SettingsPageGroupNetwork"
+    },
+    {
+        "settings_uri": "ms-settings:network",
+        "page_name": "SettingsPageNetworkStatus"
+    },
+    {
+        "settings_uri": "ms-settings:network-status",
+        "page_name": "SettingsPageNetworkStatus"
+    },
+    {
+        "settings_uri": "ms-settings:network-wifi",
+        "page_name": "SettingsPageNetworkWiFi"
+    },
+    {
+        "settings_uri": "ms-settings:network-wificalling",
+        "page_name": "SettingsPageNetworkWiFiCalling"
+    },
+    {
+        "settings_uri": "ms-settings:network-ethernet",
+        "page_name": "SettingsPageNetworkEthernet"
+    },
+    {
+        "settings_uri": "ms-settings:network-dialup",
+        "page_name": "SettingsPageNetworkDialup"
+    },
+    {
+        "settings_uri": "ms-settings:network-directaccess",
+        "page_name": "SettingsPageNetworkDirectAccess"
+    },
+    {
+        "settings_uri": "ms-settings:network-vpn",
+        "page_name": "SettingsPageNetworkVPN"
+    },
+    {
+        "settings_uri": "ms-settings:network-airplanemode",
+        "page_name": "SettingsPageNetworkAirplaneMode"
+    },
+    {
+        "settings_uri": "ms-settings:network-mobilehotspot",
+        "page_name": "SettingsPageNetworkMobileHotspot"
+    },
+    {
+        "settings_uri": "ms-settings:datausage",
+        "page_name": "SettingsPageDataSenseOverview"
+    },
+    {
+        "settings_uri": "ms-settings:network-proxy",
+        "page_name": "SettingsPageNetworkProxy"
+    },
+    {
+        "settings_uri": "ms-settings:personalization",
+        "page_name": "SettingsPageGroupPersonalization"
+    },
+    {
+        "settings_uri": "ms-settings:personalization-background",
+        "page_name": "SettingsPageBackground"
+    },
+    {
+        "settings_uri": "ms-settings:personalization-colors",
+        "page_name": "SettingsPageColors"
+    },
+    {
+        "settings_uri": "ms-settings:colors",
+        "page_name": "SettingsPageColors"
+    },
+    {
+        "settings_uri": "ms-settings:lockscreen",
+        "page_name": "SettingsPageLockScreen"
+    },
+    {
+        "settings_uri": "ms-settings:themes",
+        "page_name": "SettingsPageThemes"
+    },
+    {
+        "settings_uri": "ms-settings:fonts",
+        "page_name": "SettingsPageFonts"
+    },
+    {
+        "settings_uri": "ms-settings:personalization-start",
+        "page_name": "SettingsPageStart"
+    },
+    {
+        "settings_uri": "ms-settings:personalization-start-places",
+        "page_name": "SystemSettingsStartLinkToPlacesPage"
+    },
+    {
+        "settings_uri": "ms-settings:taskbar",
+        "page_name": "SettingsPageTaskbar"
+    },
+    {
+        "settings_uri": "ms-settings:appsfeatures",
+        "page_name": "SettingsPageAppsSizes"
+    },
+    {
+        "settings_uri": "ms-settings:optionalfeatures",
+        "page_name": "SettingsPageStorageSenseBreakdownSystemOptionalComponents"
+    },
+    {
+        "settings_uri": "ms-settings:defaultapps",
+        "page_name": "SettingsPageAppsDefaults"
+    },
+    {
+        "settings_uri": "ms-settings:maps",
+        "page_name": "SettingsPageMaps"
+    },
+    {
+        "settings_uri": "ms-settings:appsforwebsites",
+        "page_name": "SettingsPageAppsForWebsites"
+    },
+    {
+        "settings_uri": "ms-settings:videoplayback",
+        "page_name": "SettingsPageVideo"
+    },
+    {
+        "settings_uri": "ms-settings:startupapps",
+        "page_name": "SettingsPageStartup"
+    },
+    {
+        "settings_uri": "ms-settings:yourinfo",
+        "page_name": "SettingsPageAccountsPicture"
+    },
+    {
+        "settings_uri": "ms-settings:emailandaccounts",
+        "page_name": "SettingsPageAccountsEmailApp"
+    },
+    {
+        "settings_uri": "ms-settings:signinoptions",
+        "page_name": "SettingsPageAccountsManage"
+    },
+    {
+        "settings_uri": "ms-settings:workplace",
+        "page_name": "SettingsPageWorkAccess"
+    },
+    {
+        "settings_uri": "ms-settings:otherusers",
+        "page_name": "SettingsPageAccountsUsers"
+    },
+    {
+        "settings_uri": "ms-settings:sync",
+        "page_name": "SettingsPageAccountsSync"
+    },
+    {
+        "settings_uri": "ms-settings:dateandtime",
+        "page_name": "SettingsPageTimeRegionDateTime"
+    },
+    {
+        "settings_uri": "ms-settings:regionlanguage",
+        "page_name": "SettingsPageTimeRegionLanguage"
+    },
+    {
+        "settings_uri": "ms-settings:speech",
+        "page_name": "SettingsPageEaseOfAccessSpeechRecognition"
+    },
+    {
+        "settings_uri": "ms-settings:gaming-gamebar",
+        "page_name": "SettingsPageGameBar"
+    },
+    {
+        "settings_uri": "ms-settings:gaming-gamedvr",
+        "page_name": "SettingsPageGameDVR"
+    },
+    {
+        "settings_uri": "ms-settings:gaming-broadcasting",
+        "page_name": "SettingsPageGameBroadcasting"
+    },
+    {
+        "settings_uri": "ms-settings:gaming-gamemode",
+        "page_name": "SettingsPageGameMode"
+    },
+    {
+        "settings_uri": "ms-settings:gaming-xboxnetworking",
+        "page_name": "SettingsPageGameXboxNetworking"
+    },
+    {
+        "settings_uri": "ms-settings:windowsupdate",
+        "page_name": "SettingsWU"
+    },
+    {
+        "settings_uri": "ms-settings:windowsupdate-action",
+        "display_name": "ms-resource://Windows.UI.SettingsAppThreshold/SearchResources/SystemSettings_MusUpdate_UpdateActionButton/Description"
+    },
+    {
+        "settings_uri": "ms-settings:delivery-optimization",
+        "page_name": "SettingsPageDeliveryOptimization"
+    },
+    {
+        "settings_uri": "ms-settings:windowsdefender",
+        "page_name": "SettingsPageWindowsDefender"
+    },
+    {
+        "settings_uri": "windowsdefender:",
+        "display_name": "ms-resource://Microsoft.Windows.SecHealthUI/resources/DashboardTitle",
+        "description": "ms-resource://Microsoft.Windows.SecHealthUI/resources/DashboardSubTitle"
+    },
+    {
+        "settings_uri": "ms-settings:backup",
+        "page_name": "SettingsPageRestoreOneBackup"
+    },
+    {
+        "settings_uri": "ms-settings:troubleshoot",
+        "page_name": "SettingsPageTroubleshoot"
+    },
+    {
+        "settings_uri": "ms-settings:recovery",
+        "page_name": "SettingsPageRestoreRestore"
+    },
+    {
+        "settings_uri": "ms-settings:activation",
+        "page_name": "SettingsPageActivate"
+    },
+    {
+        "settings_uri": "ms-settings:findmydevice",
+        "page_name": "SettingsPageFindMyDevice"
+    },
+    {
+        "settings_uri": "ms-settings:developers",
+        "page_name": "SettingsPageRestoreDeveloperOptions"
+    },
+    {
+        "settings_uri": "ms-settings:windowsinsider",
+        "page_name": "SettingsPageFlights"
+    },
+    {
+        "settings_uri": "ms-settings:holographic",
+        "page_name": "SettingsPageGroupHolographic"
+    }
+]

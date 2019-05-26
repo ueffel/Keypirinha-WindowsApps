@@ -113,6 +113,7 @@ class WindowsApps(kp.Plugin):
         """
         if flags & kp.Events.PACKCONFIG:
             self._read_config()
+            self.on_catalog()
 
     def on_catalog(self):
         """Catalogs items for keypirinha
@@ -139,7 +140,6 @@ class WindowsApps(kp.Plugin):
                 catalog.extend(self._create_catalog_item(package))
             except Exception as ex:
                 self.warn(ex)
-                continue
 
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
@@ -178,3 +178,96 @@ class WindowsApps(kp.Plugin):
         """
         self.dbg("Executing:", item.target())
         kpu.shell_execute("explorer.exe", item.target())
+
+
+class ModernControlPanel(WindowsApps):
+    DEFAULT_DISABLE_SETTINGS = False
+
+    def __init__(self):
+        super().__init__()
+        self._disable_settings = self.DEFAULT_DISABLE_SETTINGS
+
+    def _read_config(self):
+        super()._read_config()
+        settings = self.load_settings()
+
+        self._disable_settings = settings.get_bool("disable_settings", "main", self.DEFAULT_DISABLE_SETTINGS)
+        self.dbg("disable_settings =", self._disable_settings)
+
+    def on_catalog(self):
+        """Catalogs items for keypirinha
+
+        Reads the settings.json and tries to make a item out of every entry.
+        If the "page_name" is defined, it's used to get the localized display name and description via the default
+        ms-resource: string.
+        Otherwise "display_name" and "description" are used to get the respective infos. These can be ms-resource: paths
+        or plain strings.
+        Whichever way the infos are obtained, display name has to be a not empty string.
+        (otherwise the item will not be cataloged)
+        """
+        if self._disable_settings:
+            return
+
+        start_time = time.time()
+        catalog = []
+        try:
+            settings_str = self.load_text_resource("settings.json")
+            settings = json.loads(settings_str)
+            settings_resource_path = os.path.join(os.environ["WINDIR"], "SystemResources")
+            settings_icon_path = os.path.join(os.environ["WINDIR"], "ImmersiveControlPanel", "Images", "logo.png")
+            settings_label = helper.AppXPackage.get_resource(settings_resource_path, helper.RESOURCE_SETTINGS_TITLE)
+            settings_icon = self._get_icon("windows.immersivecontrolpanel", settings_icon_path)
+
+            for setting in settings:
+                try:
+                    self.dbg("App Setting:", setting)
+                    if "page_name" in setting and setting["page_name"]:
+                        display_rsrc = helper.RESOURCE_ALT_DISPLAY_FORMAT.format(setting["page_name"])
+                        display_name = helper.AppXPackage.get_resource(settings_resource_path, display_rsrc)
+                        if not display_name:
+                            display_rsrc = helper.RESOURCE_DISPLAY_FORMAT.format(setting["page_name"])
+                            display_name = helper.AppXPackage.get_resource(settings_resource_path, display_rsrc)
+                        desc_rsrc = helper.RESOURCE_DESC_FORMAT.format(setting["page_name"])
+                        desc = helper.AppXPackage.get_resource(settings_resource_path, desc_rsrc)
+                    else:
+                        if "display_name" in setting:
+                            if setting["display_name"].startswith(helper.RESOURCE_PREFIX):
+                                display_name = helper.AppXPackage.get_resource(settings_resource_path,
+                                                                               setting["display_name"])
+                            else:
+                                display_name = setting["display_name"]
+                        else:
+                            display_name = ""
+
+                        if "description" in setting:
+                            if setting["description"].startswith(helper.RESOURCE_PREFIX):
+                                desc = helper.AppXPackage.get_resource(settings_resource_path, setting["description"])
+                            else:
+                                desc = setting["description"]
+                        else:
+                            desc = ""
+
+                    self.dbg("App Setting display_name", display_name)
+                    self.dbg("App Setting description", desc)
+
+                    if not display_name:
+                        self.warn("App Setting:", setting, "display name empty")
+                        continue
+
+                    catalog.append(self.create_item(
+                        category=kp.ItemCategory.CMDLINE,
+                        label="{}: {}".format(settings_label, display_name).strip(),
+                        short_desc="{} ({})".format(desc if desc else "", setting["settings_uri"]).strip(),
+                        target=setting["settings_uri"],
+                        args_hint=kp.ItemArgsHint.FORBIDDEN,
+                        hit_hint=kp.ItemHitHint.NOARGS,
+                        icon_handle=settings_icon
+                    ))
+                except Exception as ex:
+                    self.warn("App Setting:", setting, "\n", ex)
+        except Exception as exc:
+            self.err(exc)
+
+        self.set_catalog(catalog)
+        elapsed = time.time() - start_time
+        self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))

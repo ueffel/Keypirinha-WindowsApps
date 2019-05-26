@@ -9,6 +9,11 @@ SHLoadIndirectString.argtypes = [ct.c_wchar_p, ct.c_wchar_p, ct.c_uint, ct.POINT
 SHLoadIndirectString.restype = ct.HRESULT
 
 RESOURCE_PREFIX = "ms-resource:"
+RESOURCE_DISPLAY_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/{}/DisplayName"
+RESOURCE_ALT_DISPLAY_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold" \
+                              "/SystemSettings/Resources/{}/AlternateDisplayName"
+RESOURCE_DESC_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold/SearchResources/{}/Description"
+RESOURCE_SETTINGS_TITLE = "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/SettingsAppTitle/Text"
 
 
 class AppXPackage(object):

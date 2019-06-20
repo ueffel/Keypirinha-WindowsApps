@@ -256,8 +256,8 @@ class ModernControlPanel(WindowsApps):
 
                     catalog.append(self.create_item(
                         category=kp.ItemCategory.CMDLINE,
-                        label="{}: {}".format(settings_label, display_name).strip(),
-                        short_desc="{} ({})".format(desc if desc else "", setting["settings_uri"]).strip(),
+                        label="{}: {} ({})".format(settings_label, display_name, setting["settings_uri"]).strip(),
+                        short_desc=desc if desc else "",
                         target=setting["settings_uri"],
                         args_hint=kp.ItemArgsHint.FORBIDDEN,
                         hit_hint=kp.ItemHitHint.NOARGS,

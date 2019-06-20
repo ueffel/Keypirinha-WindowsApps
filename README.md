@@ -5,8 +5,12 @@ Universal Windows Apps (formerly known as Metro Apps) for launching.
 
 ## Usage
 
-All items are prefixed with `Windows App:` (configurable).
+All apps are prefixed with `Windows App:` (configurable).
 Miscellaneous items are hidden by default.
+
+Windows settings to directly open certain pages are also cataloged. These item labels are localized
+to your system, it should be something like `Windows-Settings: Display (ms-settings:display)`
+(German Windows would display `Windows-Einstellungen: Anzeige (ms-settings:display)`).
 
 ## Installation
 

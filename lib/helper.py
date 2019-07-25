@@ -15,6 +15,10 @@ RESOURCE_ALT_DISPLAY_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold" \
 RESOURCE_DESC_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold/SearchResources/{}/Description"
 RESOURCE_SETTINGS_TITLE = "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/SettingsAppTitle/Text"
 
+WINDOWS10 = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+WINDOWS81 = "http://schemas.microsoft.com/appx/2013/manifest"
+WINDOWS8 = "http://schemas.microsoft.com/appx/2010/manifest"
+
 
 class AppXPackage(object):
     """Represents a windows app package
@@ -84,23 +88,30 @@ class AppXPackage(object):
                 app_description = visual_elements.get("Description")
 
                 logos = {attr: visual_elements.get(attr) for attr in visual_elements.attrib if "logo" in attr.lower()}
-                if default_tile:
-                    logos.update({attr: default_tile.get(attr) for attr in default_tile.attrib
-                                  if "logo" in attr.lower()})
-                square_logos = {key: value for key, value in logos.items() if "square" in key.lower()}
-                wide_logos = {key: value for key, value in logos.items() if "wide" in key.lower()}
+                if ns["default"] == WINDOWS10 and "Square44x44Logo" in logos:
+                    app_icon_path = os.path.join(self.InstallLocation, logos["Square44x44Logo"])
+                elif ns["default"] == WINDOWS81 and "Square30x30Logo" in logos:
+                    app_icon_path = os.path.join(self.InstallLocation, logos["Square30x30Logo"])
+                elif ns["default"] == WINDOWS8 and "SmallLogo" in logos:
+                    app_icon_path = os.path.join(self.InstallLocation, logos["SmallLogo"])
+                else:
+                    if default_tile:
+                        logos.update({attr: default_tile.get(attr) for attr in default_tile.attrib
+                                      if "logo" in attr.lower()})
+                    square_logos = {key: value for key, value in logos.items() if "square" in key.lower()}
+                    wide_logos = {key: value for key, value in logos.items() if "wide" in key.lower()}
 
-                if square_logos:
-                    biggest = max(square_logos.keys(), key=lambda x: int(re.search(r"(\d+)x\d+", x).groups()[0]))
-                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
-                elif not app_icon_path and wide_logos:
-                    biggest = max(wide_logos, key=lambda x: re.search(r"(\d+)x\d+", x).groups()[0])
-                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
-                elif not app_icon_path and logos:
-                    biggest = min(logos)
-                    app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
-                elif not app_icon_path:
-                    app_icon_path = package_icon_path
+                    if square_logos:
+                        biggest = max(square_logos.keys(), key=lambda x: int(re.search(r"(\d+)x\d+", x).groups()[0]))
+                        app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                    elif not app_icon_path and wide_logos:
+                        biggest = max(wide_logos, key=lambda x: re.search(r"(\d+)x\d+", x).groups()[0])
+                        app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                    elif not app_icon_path and logos:
+                        biggest = min(logos)
+                        app_icon_path = os.path.join(self.InstallLocation, logos[biggest])
+                    elif not app_icon_path:
+                        app_icon_path = package_icon_path
 
                 if app_display_name and app_display_name.startswith(RESOURCE_PREFIX):
                     resource = self.get_resource(self.InstallLocation, app_display_name)

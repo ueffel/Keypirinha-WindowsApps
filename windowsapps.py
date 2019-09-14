@@ -6,6 +6,7 @@ import os
 import glob
 import time
 import json
+import traceback
 
 
 class WindowsApps(kp.Plugin):
@@ -73,14 +74,18 @@ class WindowsApps(kp.Plugin):
             out_dir = os.path.join(self.get_package_cache_path(True), name)
             if not os.path.isdir(out_dir):
                 os.mkdir(out_dir)
-            out_path = os.path.join(out_dir, os.path.basename(logo))
-            if not os.path.isfile(out_path):
-                with open(logo, "rb") as in_file, \
-                        open(out_path, "wb") as out_file:
-                    out_file.write(in_file.read())
-            cached_logos.append("cache://{}/{}/{}".format(self.package_full_name(),
-                                                          name,
-                                                          os.path.basename(logo)))
+            try:
+                out_path = os.path.join(out_dir, os.path.basename(logo))
+                if not os.path.isfile(out_path):
+                    with open(logo, "rb") as in_file, \
+                            open(out_path, "wb") as out_file:
+                        out_file.write(in_file.read())
+                cached_logos.append("cache://{}/{}/{}".format(self.package_full_name(),
+                                                              name,
+                                                              os.path.basename(logo)))
+            except Exception as ex:
+                self.warn(ex)
+                self.dbg(traceback.format_exc())
         return cached_logos
 
     def _read_config(self):
@@ -140,6 +145,7 @@ class WindowsApps(kp.Plugin):
                 catalog.extend(self._create_catalog_item(package))
             except Exception as ex:
                 self.warn(ex)
+                self.dbg(traceback.format_exc())
 
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
@@ -177,7 +183,7 @@ class WindowsApps(kp.Plugin):
         """Starts the windows app
         """
         self.dbg("Executing:", item.target())
-        kpu.shell_execute("explorer.exe", item.target())
+        kpu.shell_execute(item.target())
 
 
 class ModernControlPanel(WindowsApps):

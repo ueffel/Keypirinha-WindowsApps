@@ -43,6 +43,9 @@ class AppXPackage(object):
     def _get_applications(self):
         """Reads the manifest of the package and extracts name, description, applications and logos
         """
+        if not self.InstallLocation:
+            return []
+
         manifest_path = os.path.join(self.InstallLocation, "AppxManifest.xml")
         if not os.path.isfile(manifest_path):
             return []

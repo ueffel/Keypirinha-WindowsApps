@@ -117,27 +117,27 @@ class AppXPackage(object):
                         app_icon_path = package_icon_path
 
                 if app_display_name and app_display_name.startswith(RESOURCE_PREFIX):
-                    resource = self.get_resource(self.InstallLocation, app_display_name)
+                    resource = self.get_resource(self.InstallLocation, app_display_name, self.Name)
                     if resource:
                         app_display_name = resource
                     else:
                         if package_display_name and package_display_name.startswith(RESOURCE_PREFIX):
-                            resource = self.get_resource(self.InstallLocation, package_display_name)
+                            resource = self.get_resource(self.InstallLocation, package_display_name, self.Name)
                             if resource:
                                 package_display_name = resource
                                 app_display_name = package_display_name
                             else:
-                                continue
+                                app_display_name = self.Name
                         else:
-                            continue
+                            app_display_name = self.Name
 
                 if app_description and app_description.startswith(RESOURCE_PREFIX):
-                    resource = self.get_resource(self.InstallLocation, app_description)
+                    resource = self.get_resource(self.InstallLocation, app_description, self.Name)
                     if resource:
                         app_description = resource
                     else:
                         if package_description and package_description.startswith(RESOURCE_PREFIX):
-                            resource = self.get_resource(self.InstallLocation, package_description)
+                            resource = self.get_resource(self.InstallLocation, package_description, self.Name)
                             if resource:
                                 package_description = resource
                                 app_description = package_description
@@ -151,7 +151,7 @@ class AppXPackage(object):
         return apps
 
     @staticmethod
-    def get_resource(install_location, resource):
+    def get_resource(install_location, resource, name=None):
         """Helper method to resolve resource strings to their (localized) value
         """
         pri_files = []
@@ -160,28 +160,32 @@ class AppXPackage(object):
         # the assumption is, that localized .pri resource data files are deeper in the file tree
         # and therefore have a longer path
         pri_files_sorted = sorted(pri_files, key=lambda file: len(file), reverse=True)
+        resource_root_names = ["/resources"]
+        if name:
+            resource_root_names.append(name)
 
         for pri_file in pri_files_sorted:
-            try:
-                if resource[0:12] == RESOURCE_PREFIX:
-                    resource_key = resource[12:]
-                    if resource_key.startswith("//"):
-                        resource_path = resource
-                    elif resource_key.startswith("/"):
-                        resource_path = RESOURCE_PREFIX + "//" + resource_key
-                    else:
-                        resource_path = RESOURCE_PREFIX + "///resources/" + resource_key
+            for resource_root_name in resource_root_names:
+                try:
+                    if resource[0:12] == RESOURCE_PREFIX:
+                        resource_key = resource[12:]
+                        if resource_key.startswith("//"):
+                            resource_path = resource
+                        elif resource_key.startswith("/"):
+                            resource_path = RESOURCE_PREFIX + "//" + resource_key
+                        else:
+                            resource_path = RESOURCE_PREFIX + "//" + resource_root_name + "/" + resource_key
 
-                    resource_descriptor = "@{{{}? {}}}".format(pri_file, resource_path)
+                        resource_descriptor = "@{{{}? {}}}".format(pri_file, resource_path)
 
-                    inp = ct.create_unicode_buffer(resource_descriptor)
-                    output = ct.create_unicode_buffer(1024)
-                    result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
-                    if result == 0 and output.value:
-                        if not output.value.startswith(RESOURCE_PREFIX):
-                            return output.value
-            except OSError:
-                pass
+                        inp = ct.create_unicode_buffer(resource_descriptor)
+                        output = ct.create_unicode_buffer(1024)
+                        result = SHLoadIndirectString(inp, output, ct.sizeof(output), None)
+                        if result == 0 and output.value:
+                            if not output.value.startswith(RESOURCE_PREFIX):
+                                return output.value
+                except OSError:
+                    pass
 
         return None
 
@@ -198,3 +202,25 @@ class AppX(object):
         self.icon_path = icon_path
         self.app_id = app_id
         self.misc_app = misc_app
+
+
+if __name__ == "__main__":
+    import json
+    import subprocess
+
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    output, err = subprocess.Popen(["powershell.exe",
+                                    "-noprofile",
+                                    "Get-AppxPackage | ConvertTo-Json"],
+                                    stdout=subprocess.PIPE,
+                                    universal_newlines=True,
+                                    shell=False,
+                                    startupinfo=startupinfo).communicate()
+
+    catalog = []
+    packages = json.loads(output)
+    # packages a separated by a double newline within the output
+    for package in packages:
+        p = AppXPackage(package)
+        p.apps()

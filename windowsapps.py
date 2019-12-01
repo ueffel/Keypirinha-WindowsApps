@@ -22,6 +22,8 @@ class WindowsApps(kp.Plugin):
         """
         super().__init__()
         self._item_label = self.DEFAULT_ITEM_LABEL
+        self._show_misc_apps = self.DEFAULT_SHOW_MISC_APPS
+        self._preferred_contrast = self.DEFAULT_PREFERRED_CONTRAST
 
     def _get_icon(self, name, icon_path):
         """Create a list of possible logo files to show as icon for a window app
@@ -76,7 +78,7 @@ class WindowsApps(kp.Plugin):
                 os.mkdir(out_dir)
             try:
                 out_path = os.path.join(out_dir, os.path.basename(logo))
-                if not os.path.isfile(out_path):
+                if not os.path.isfile(out_path) or os.path.getsize(out_path) != os.path.getsize(logo):
                     with open(logo, "rb") as in_file, \
                             open(out_path, "wb") as out_file:
                         out_file.write(in_file.read())
@@ -102,11 +104,15 @@ class WindowsApps(kp.Plugin):
         self._show_misc_apps = settings.get_bool("show_misc_apps", "main", self.DEFAULT_SHOW_MISC_APPS)
         self.dbg("show_misc_apps =", self._show_misc_apps)
 
+        preferred_contrast_before = self._preferred_contrast
         self._preferred_contrast = settings.get_enum("preferred_contrast",
                                                      "main",
                                                      self.DEFAULT_PREFERRED_CONTRAST,
                                                      ["black", "white"])
         self.dbg("preferred_contrast =", self._preferred_contrast)
+        preferred_contrast_after = self._preferred_contrast
+        if preferred_contrast_before != preferred_contrast_after:
+            self._clear_logo_cache()
 
     def on_start(self):
         """Reads the config
@@ -185,6 +191,24 @@ class WindowsApps(kp.Plugin):
         self.dbg("Executing:", item.target())
         kpu.shell_execute(item.target())
 
+    def _clear_logo_cache(self):
+        self.dbg("Clearing logo cache")
+        top = self.get_package_cache_path(False)
+
+        self.dbg("Cleaning up:", top)
+        try:
+            for root, dirs, files in os.walk(top, topdown=False):
+                for name in files:
+                    path = os.path.join(root, name)
+                    self.dbg("Removing file:", path)
+                    os.remove(path)
+                for name in dirs:
+                    path = os.path.join(root, name)
+                    self.dbg("Removing dir:", path)
+                    os.rmdir(path)
+        except Exception:
+            self.err(traceback.format_exc())
+
 
 class ModernControlPanel(WindowsApps):
     DEFAULT_DISABLE_SETTINGS = False
@@ -194,8 +218,10 @@ class ModernControlPanel(WindowsApps):
         self._disable_settings = self.DEFAULT_DISABLE_SETTINGS
 
     def _read_config(self):
-        super()._read_config()
+        self.dbg("Reading config")
         settings = self.load_settings()
+
+        self._debug = settings.get_bool("debug", "main", False)
 
         self._disable_settings = settings.get_bool("disable_settings", "main", self.DEFAULT_DISABLE_SETTINGS)
         self.dbg("disable_settings =", self._disable_settings)

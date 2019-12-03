@@ -223,6 +223,12 @@ class ModernControlPanel(WindowsApps):
 
         self._debug = settings.get_bool("debug", "main", False)
 
+        self._preferred_contrast = settings.get_enum("preferred_contrast",
+                                                     "main",
+                                                     self.DEFAULT_PREFERRED_CONTRAST,
+                                                     ["black", "white"])
+        self.dbg("preferred_contrast =", self._preferred_contrast)
+
         self._disable_settings = settings.get_bool("disable_settings", "main", self.DEFAULT_DISABLE_SETTINGS)
         self.dbg("disable_settings =", self._disable_settings)
 

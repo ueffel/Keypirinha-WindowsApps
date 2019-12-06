@@ -24,6 +24,7 @@ class WindowsApps(kp.Plugin):
         self._item_label = self.DEFAULT_ITEM_LABEL
         self._show_misc_apps = self.DEFAULT_SHOW_MISC_APPS
         self._preferred_contrast = self.DEFAULT_PREFERRED_CONTRAST
+        self._icon_handles = []
 
     def _get_icon(self, name, icon_path):
         """Create a list of possible logo files to show as icon for a window app
@@ -65,7 +66,8 @@ class WindowsApps(kp.Plugin):
 
         if logos:
             cached_logos = self._copy_files(name, logos)
-            handle = self.load_icon(cached_logos)
+            handle = self.load_icon(cached_logos, force_reload=True)
+            self._icon_handles.append(handle)
             return handle
 
     def _copy_files(self, name, logos):
@@ -133,6 +135,12 @@ class WindowsApps(kp.Plugin):
         and creates catalog items for keypirinha.
         """
         start_time = time.time()
+
+        self.dbg("Freeing", len(self._icon_handles), "icon handles")
+        for icon_handle in self._icon_handles:
+            icon_handle.free()
+        self._icon_handles.clear()
+
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         output, err = subprocess.Popen(["powershell.exe",

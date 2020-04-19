@@ -153,7 +153,6 @@ class WindowsApps(kp.Plugin):
 
         catalog = []
         packages = json.loads(output)
-        # packages a separated by a double newline within the output
         for package in packages:
             try:
                 catalog.extend(self._create_catalog_item(package))

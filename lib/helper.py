@@ -220,7 +220,6 @@ if __name__ == "__main__":
 
     catalog = []
     packages = json.loads(output)
-    # packages a separated by a double newline within the output
     for package in packages:
         p = AppXPackage(package)
         p.apps()

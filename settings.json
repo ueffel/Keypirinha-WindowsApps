@@ -371,5 +371,10 @@
     {
         "settings_uri": "ms-settings:holographic",
         "page_name": "SettingsPageGroupHolographic"
+    },
+    {
+        "settings_uri": "ms-settings:apps-volume",
+        "display_name": "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/SystemSettings_Audio_MixerLink/DisplayName",
+        "description": "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/SystemSettings_Audio_Mixer_Info/Text"
     }
 ]

@@ -16,6 +16,8 @@ class WindowsApps(kp.Plugin):
     DEFAULT_ITEM_LABEL = "Windows App:"
     DEFAULT_SHOW_MISC_APPS = False
     DEFAULT_PREFERRED_CONTRAST = "black"
+    ACTION_RUN_NORMAL = "run_normal"
+    ACTION_RUN_ELEVATED = "run_elevated"
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -121,6 +123,22 @@ class WindowsApps(kp.Plugin):
         """
         self._read_config()
 
+        actions = []
+
+        normal = self.create_action(
+            name=self.ACTION_RUN_NORMAL,
+            label=helper.AppXPackage.get_resource(os.path.join(os.environ["WINDIR"], "SystemResources"), helper.RESOURCE_OPEN),
+        )
+        actions.append(normal)
+
+        elevated = self.create_action(
+            name=self.ACTION_RUN_ELEVATED,
+            label=helper.AppXPackage.get_resource(os.path.join(os.environ["WINDIR"], "SystemResources"), helper.RESOURCE_RUN_AS_ADMIN),
+        )
+        actions.append(elevated)
+
+        self.set_actions(kp.ItemCategory.CMDLINE, actions)
+
     def on_events(self, flags):
         """Reloads the package config when its changed
         """
@@ -195,8 +213,13 @@ class WindowsApps(kp.Plugin):
     def on_execute(self, item, action):
         """Starts the windows app
         """
-        self.dbg("Executing:", item.target())
-        kpu.shell_execute(item.target())
+        self.dbg("Executing:", item.target(), action.name() if action else None)
+
+        if not action or action.name() == self.ACTION_RUN_NORMAL:
+            verb = None
+        elif action.name() == self.ACTION_RUN_ELEVATED:
+            verb = "runas"
+        kpu.shell_execute(item.target(), verb=verb)
 
     def _clear_logo_cache(self):
         self.dbg("Clearing logo cache")

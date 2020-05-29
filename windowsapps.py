@@ -16,8 +16,10 @@ class WindowsApps(kp.Plugin):
     DEFAULT_ITEM_LABEL = "Windows App:"
     DEFAULT_SHOW_MISC_APPS = False
     DEFAULT_PREFERRED_CONTRAST = "black"
+    STORE_PREFIX = "ms-windows-store://pdp/?PFN={}"
     ACTION_RUN_NORMAL = "run_normal"
     ACTION_RUN_ELEVATED = "run_elevated"
+    ACTION_OPEN_STORE_PAGE = "open_store_page"
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -137,6 +139,13 @@ class WindowsApps(kp.Plugin):
         )
         actions.append(elevated)
 
+        open_store = self.create_action(
+            name=self.ACTION_OPEN_STORE_PAGE,
+            label="Open store page",
+            short_desc="Opens the product detail page of the package in the Microsoft Store app."
+        )
+        actions.append(open_store)
+
         self.set_actions(kp.ItemCategory.CMDLINE, actions)
 
     def on_events(self, flags):
@@ -201,7 +210,8 @@ class WindowsApps(kp.Plugin):
                             target=app.execution,
                             args_hint=kp.ItemArgsHint.FORBIDDEN,
                             hit_hint=kp.ItemHitHint.NOARGS,
-                            icon_handle=self._get_icon(package.Name, app.icon_path)
+                            icon_handle=self._get_icon(package.Name, app.icon_path),
+                            data_bag=package.PackageFamilyName
                         ))
             return catalog_items
         except Exception as exc:
@@ -214,6 +224,12 @@ class WindowsApps(kp.Plugin):
         """Starts the windows app
         """
         self.dbg("Executing:", item.target(), action.name() if action else None)
+
+        if action and action.name() == self.ACTION_OPEN_STORE_PAGE:
+            pfn = item.data_bag()
+            self.dbg("PackageFamilyName", pfn, self.STORE_PREFIX.format(pfn))
+            kpu.shell_execute(self.STORE_PREFIX.format(pfn))
+            return
 
         if not action or action.name() == self.ACTION_RUN_NORMAL:
             verb = None

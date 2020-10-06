@@ -15,7 +15,7 @@ class WindowsApps(kp.Plugin):
 
     DEFAULT_ITEM_LABEL = "Windows App:"
     DEFAULT_SHOW_MISC_APPS = False
-    DEFAULT_PREFERRED_CONTRAST = "black"
+    DEFAULT_PREFERRED_CONTRAST = ""
     STORE_PREFIX = "ms-windows-store://pdp/?PFN={}"
     ACTION_RUN_NORMAL = "run_normal"
     ACTION_RUN_ELEVATED = "run_elevated"
@@ -34,33 +34,27 @@ class WindowsApps(kp.Plugin):
         """Create a list of possible logo files to show as icon for a window app
         """
         base_path = os.path.splitext(icon_path)
+        dirname = os.path.dirname(base_path[0])
+        basename = os.path.basename(base_path[0])
         logos = []
         logos.extend(glob.glob(icon_path))
         logos.extend(glob.glob("{}.scale-*{}".format(base_path[0], base_path[1])))
-        logos.extend(glob.glob("{}/scale-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                        os.path.basename(base_path[0]),
-                                                        base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/{}{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}.targetsize-*{}".format(base_path[0], base_path[1])))
         logos.extend(glob.glob("{}.contrast-*{}".format(base_path[0], base_path[1])))
-        logos.extend(glob.glob("{}/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                           os.path.basename(base_path[0]),
-                                                           base_path[1])))
-        logos.extend(glob.glob("{}/contrast-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
-                                                                      os.path.basename(base_path[0]),
-                                                                      base_path[1])))
-        logos.extend(glob.glob("{}/contrast-*/{}.scale-*{}".format(os.path.dirname(base_path[0]),
-                                                                   os.path.basename(base_path[0]),
-                                                                   base_path[1])))
-        logos.extend(glob.glob("{}/contrast-*/scale-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                                   os.path.basename(base_path[0]),
-                                                                   base_path[1])))
-        logos.extend(glob.glob("{}/scale-*/{}.contrast-*{}".format(os.path.dirname(base_path[0]),
-                                                                   os.path.basename(base_path[0]),
-                                                                   base_path[1])))
-        logos.extend(glob.glob("{}/scale-*/contrast-*/{}{}".format(os.path.dirname(base_path[0]),
-                                                                   os.path.basename(base_path[0]),
-                                                                   base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}.contrast-*{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}.scale-*{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/{}.targetsize-*{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/contrast-*/scale-*/{}{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/{}.contrast-*{}".format(dirname, basename, base_path[1])))
+        logos.extend(glob.glob("{}/scale-*/contrast-*/{}{}".format(dirname, basename, base_path[1])))
 
-        logos_preferred = [logo for logo in logos if "contrast-{}".format(self._preferred_contrast) in logo]
+        if self._preferred_contrast:
+            logos_preferred = [logo for logo in logos if "contrast-{}".format(self._preferred_contrast) in logo]
+        else:
+            logos_preferred = [logo for logo in logos if "contrast-" not in logo]
+
         if logos_preferred:
             logos = logos_preferred
 
@@ -114,7 +108,7 @@ class WindowsApps(kp.Plugin):
         self._preferred_contrast = settings.get_enum("preferred_contrast",
                                                      "main",
                                                      self.DEFAULT_PREFERRED_CONTRAST,
-                                                     ["black", "white"])
+                                                     ["black", "white", ""])
         self.dbg("preferred_contrast =", self._preferred_contrast)
         preferred_contrast_after = self._preferred_contrast
         if preferred_contrast_before != preferred_contrast_after:

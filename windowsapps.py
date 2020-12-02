@@ -329,7 +329,7 @@ class ModernControlPanel(WindowsApps):
                     self.dbg("App Setting description", desc)
 
                     if not display_name:
-                        self.warn("App Setting:", setting, "display name empty")
+                        self.dbg("App Setting:", setting, "display name empty")
                         continue
 
                     catalog.append(self.create_item(

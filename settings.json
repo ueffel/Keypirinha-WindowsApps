@@ -28,10 +28,6 @@
         "page_name": "SettingsPageQuietHours"
     },
     {
-        "settings_uri": "ms-settings:quietmomentshome",
-        "page_name": "SystemSettings_QuietMoments_On_Home_Mode"
-    },
-    {
         "settings_uri": "ms-settings:quietmomentsscheduled",
         "page_name": "SystemSettings_QuietMoments_On_Scheduled_Mode"
     },
@@ -50,10 +46,6 @@
     {
         "settings_uri": "ms-settings:batterysaver",
         "page_name": "SystemSettings_BatterySaver_LandingPage_SettingsLink"
-    },
-    {
-        "settings_uri": "ms-settings:batterysaver-usagedetails",
-        "page_name": "SystemSettings_BatterySaver_LandingPage_UsageDetailsLink"
     },
     {
         "settings_uri": "ms-settings:batterysaver-settings",
@@ -158,10 +150,6 @@
     {
         "settings_uri": "ms-settings:network-wifi",
         "page_name": "SettingsPageNetworkWiFi"
-    },
-    {
-        "settings_uri": "ms-settings:network-wificalling",
-        "page_name": "SettingsPageNetworkWiFiCalling"
     },
     {
         "settings_uri": "ms-settings:network-ethernet",
@@ -273,7 +261,7 @@
     },
     {
         "settings_uri": "ms-settings:signinoptions",
-        "page_name": "SettingsPageAccountsManage"
+        "page_name": "SettingsPageSignInOptions"
     },
     {
         "settings_uri": "ms-settings:workplace",

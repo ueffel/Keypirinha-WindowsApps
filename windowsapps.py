@@ -333,7 +333,7 @@ class ModernControlPanel(WindowsApps):
                         continue
 
                     catalog.append(self.create_item(
-                        category=kp.ItemCategory.CMDLINE,
+                        category=kp.ItemCategory.URL,
                         label="{}: {} ({})".format(settings_label, display_name, setting["settings_uri"]).strip(),
                         short_desc=desc if desc else "",
                         target=setting["settings_uri"],

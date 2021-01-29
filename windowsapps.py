@@ -166,14 +166,14 @@ class WindowsApps(kp.Plugin):
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         output, err = subprocess.Popen(["powershell.exe",
                                         "-noprofile",
-                                        "Get-AppxPackage | ConvertTo-Json"],
+                                        "chcp 65001 >$null; Get-AppxPackage | ConvertTo-Json"],
                                        stdout=subprocess.PIPE,
-                                       universal_newlines=True,
+                                       universal_newlines=False,
                                        shell=False,
                                        startupinfo=startupinfo).communicate()
 
         catalog = []
-        packages = json.loads(output)
+        packages = json.loads(output.decode("utf8"))
         for package in packages:
             try:
                 catalog.extend(self._create_catalog_item(package))

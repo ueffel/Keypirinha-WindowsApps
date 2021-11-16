@@ -214,14 +214,20 @@ if __name__ == "__main__":
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     output, err = subprocess.Popen(["powershell.exe",
                                     "-noprofile",
-                                    "Get-AppxPackage | ConvertTo-Json"],
+                                    "chcp 65001 >$null; Get-AppxPackage | ConvertTo-Json"],
                                     stdout=subprocess.PIPE,
-                                    universal_newlines=True,
+                                    universal_newlines=False,
                                     shell=False,
                                     startupinfo=startupinfo).communicate()
 
     catalog = []
-    packages = json.loads(output)
+    packages = json.loads(output.decode("utf8"))
     for package in packages:
         p = AppXPackage(package)
-        p.apps()
+        apps = p.apps()
+        if all([app.misc_app for app in apps]):
+            continue
+        print(f"{p.Name:50} {p.InstallLocation}")
+        for app in apps:
+            if not app.misc_app:
+                print(f"  - {app.display_name} ({app.description})")

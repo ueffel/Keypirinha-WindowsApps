@@ -83,7 +83,7 @@ class AppXPackage(object):
             app_misc = False
 
             visual_elements = next((elem for elem in application if elem.tag.endswith("VisualElements")), None)
-            if visual_elements:
+            if visual_elements is not None:
                 default_tile = next((elem for elem in visual_elements if elem.tag.endswith('DefaultTile')), None)
 
                 app_misc = visual_elements.get("AppListEntry") == "none" \
@@ -100,7 +100,7 @@ class AppXPackage(object):
                 elif ns["default"] == WINDOWS8 and "SmallLogo" in logos:
                     app_icon_path = os.path.join(self.InstallLocation, logos["SmallLogo"])
                 else:
-                    if default_tile:
+                    if default_tile is not None:
                         logos.update({attr: default_tile.get(attr) for attr in default_tile.attrib
                                       if "logo" in attr.lower()})
                     square_logos = {key: value for key, value in logos.items() if "square" in key.lower()}

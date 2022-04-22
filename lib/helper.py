@@ -60,6 +60,10 @@ class AppXPackage(object):
 
         apps = []
 
+        identity_node = manifest.find("./default:Identity", ns)
+        if identity_node is not None:
+            self.Name = identity_node.get("Name")
+
         package_description = ""
         default_description_node = manifest.find("./default:Properties/default:Description", ns)
         if default_description_node is not None:
@@ -207,22 +211,35 @@ class AppX(object):
 
 
 if __name__ == "__main__":
-    import json
-    import subprocess
+    import winreg
 
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    output, err = subprocess.Popen(["powershell.exe",
-                                    "-noprofile",
-                                    "chcp 65001 >$null; Get-AppxPackage | ConvertTo-Json"],
-                                    stdout=subprocess.PIPE,
-                                    universal_newlines=False,
-                                    shell=False,
-                                    startupinfo=startupinfo).communicate()
+    activatable = []
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Classes\ActivatableClasses\Package") as package:
+        for idx in range(0, winreg.QueryInfoKey(package)[0]):
+            name = winreg.EnumKey(package, idx)
+            activatable.append(name)
 
-    catalog = []
-    packages = json.loads(output.decode("utf8"))
-    for package in packages:
+    # windows settings app as default because it is not included in the registry
+    packages = [{
+        "Name": "windows.immersivecontrolpanel",
+        "InstallLocation": r"C:\Windows\ImmersiveControlPanel",
+    }]
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages") as package:
+        for idx in range(0, winreg.QueryInfoKey(package)[0]):
+            name = winreg.EnumKey(package, idx)
+            with winreg.OpenKey(package, name) as key:
+                if name in activatable:
+                    try:
+                        p = {
+                            "Name": name,
+                            "InstallLocation": winreg.QueryValueEx(key, "PackageRootFolder")[0],
+                        }
+                        packages.append(p)
+                    except WindowsError:
+                        continue
+
+    counter = 0
+    for package in sorted(packages, key=lambda p: p["InstallLocation"].lower()):
         p = AppXPackage(package)
         apps = p.apps()
         if all([app.misc_app for app in apps]):
@@ -231,3 +248,5 @@ if __name__ == "__main__":
         for app in apps:
             if not app.misc_app:
                 print(f"  - {app.display_name} ({app.description})")
+                counter += 1
+    print(counter, "packages")

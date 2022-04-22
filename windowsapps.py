@@ -1,12 +1,12 @@
 from .lib import helper
 import keypirinha as kp
 import keypirinha_util as kpu
-import subprocess
 import os
 import glob
 import time
 import json
 import traceback
+import winreg
 
 
 class WindowsApps(kp.Plugin):
@@ -20,6 +20,8 @@ class WindowsApps(kp.Plugin):
     ACTION_RUN_NORMAL = "run_normal"
     ACTION_RUN_ELEVATED = "run_elevated"
     ACTION_OPEN_STORE_PAGE = "open_store_page"
+    REGKEY_APPS = r"SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages"
+    REGKEY_ACTI = r"SOFTWARE\Classes\ActivatableClasses\Package"
 
     def __init__(self):
         """Default constructor and initializing internal attributes
@@ -162,18 +164,32 @@ class WindowsApps(kp.Plugin):
             icon_handle.free()
         self._icon_handles.clear()
 
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        output, err = subprocess.Popen(["powershell.exe",
-                                        "-noprofile",
-                                        "chcp 65001 >$null; Get-AppxPackage | ConvertTo-Json"],
-                                       stdout=subprocess.PIPE,
-                                       universal_newlines=False,
-                                       shell=False,
-                                       startupinfo=startupinfo).communicate()
+        activatable = []
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, self.REGKEY_ACTI) as package:
+            for idx in range(0, winreg.QueryInfoKey(package)[0]):
+                name = winreg.EnumKey(package, idx)
+                activatable.append(name)
+
+        # windows settings app as default because it is not included in the registry
+        packages = [{
+            "Name": "windows.immersivecontrolpanel",
+            "InstallLocation": r"C:\Windows\ImmersiveControlPanel",
+        }]
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, self.REGKEY_APPS) as package:
+            for idx in range(0, winreg.QueryInfoKey(package)[0]):
+                name = winreg.EnumKey(package, idx)
+                with winreg.OpenKey(package, name) as key:
+                    if name in activatable:
+                        try:
+                            p = {
+                                "Name": name,
+                                "InstallLocation": winreg.QueryValueEx(key, "PackageRootFolder")[0],
+                            }
+                            packages.append(p)
+                        except WindowsError:
+                            continue
 
         catalog = []
-        packages = json.loads(output.decode("utf8"))
         for package in packages:
             try:
                 catalog.extend(self._create_catalog_item(package))

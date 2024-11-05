@@ -225,9 +225,8 @@ class WindowsApps(kp.Plugin):
             kpu.shell_execute(self.STORE_PREFIX.format(pfn))
             return
 
-        if not action or action.name() == self.ACTION_RUN_NORMAL:
-            verb = None
-        elif action.name() == self.ACTION_RUN_ELEVATED:
+        verb = None
+        if action and action.name() == self.ACTION_RUN_ELEVATED:
             verb = "runas"
         kpu.shell_execute(item.target(), verb=verb)
 

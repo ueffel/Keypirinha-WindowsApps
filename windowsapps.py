@@ -284,6 +284,8 @@ class ModernControlPanel(WindowsApps):
         (otherwise the item will not be cataloged)
         """
         if self._disable_settings:
+            self.dbg("cataloging of windows settings disabled")
+            self.set_catalog([])
             return
 
         start_time = time.time()

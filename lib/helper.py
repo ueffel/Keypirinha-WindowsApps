@@ -14,6 +14,7 @@ RESOURCE_ALT_DISPLAY_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold" \
                               "/SystemSettings/Resources/{}/AlternateDisplayName"
 RESOURCE_DESC_FORMAT = "ms-resource://Windows.UI.SettingsAppThreshold/SearchResources/{}/Description"
 RESOURCE_SETTINGS_TITLE = "ms-resource://Windows.UI.SettingsAppThreshold/SystemSettings/Resources/SettingsAppTitle/Text"
+RESOURCE_SETTINGS_TITLE2 = "ms-resource://Windows.UI.SettingsAppThreshold/resources/DisplayName"
 RESOURCE_OPEN = "ms-resource://Windows.UI.ShellCommon/JumpViewUI/JumpView_CustomOpenAction"
 RESOURCE_RUN_AS_ADMIN = "ms-resource://Windows.UI.ShellCommon/JumpViewUI/JumpView_CustomRunAsAdminAction"
 

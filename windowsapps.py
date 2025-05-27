@@ -1,15 +1,18 @@
-from .lib import helper
+import glob
+import json
+import os
+import subprocess
+import time
+import traceback
+
 import keypirinha as kp
 import keypirinha_util as kpu
-import subprocess
-import os
-import glob
-import time
-import json
-import traceback
+
+from .lib import helper
 
 
 class WindowsApps(kp.Plugin):
+
     """Lists Universal Windows Apps (formerly Metro Apps) in Keypirinha for launching
     """
 
@@ -251,6 +254,8 @@ class WindowsApps(kp.Plugin):
 
 class ModernControlPanel(WindowsApps):
     DEFAULT_DISABLE_SETTINGS = False
+    ACTION_OPEN = "open_setting"
+    ACTION_COPY_URL = "copy_url_settings"
 
     def __init__(self):
         super().__init__()
@@ -287,6 +292,19 @@ class ModernControlPanel(WindowsApps):
             self.set_catalog([])
             return
 
+        actions = []
+        actions.append(self.create_action(
+            name=self.ACTION_OPEN,
+            label="Open settings page",
+            short_desc="Opens specific settings page",
+        ))
+        actions.append(self.create_action(
+            name=self.ACTION_COPY_URL,
+            label="Copy URL",
+            short_desc="Copies the ms-settings shortcut to clipboard",
+        ))
+        self.set_actions(kp.ItemCategory.KEYWORD, actions)
+
         start_time = time.time()
         catalog = []
         try:
@@ -295,6 +313,8 @@ class ModernControlPanel(WindowsApps):
             settings_resource_path = os.path.join(os.environ["WINDIR"], "SystemResources")
             settings_icon_path = os.path.join(os.environ["WINDIR"], "ImmersiveControlPanel", "Images", "logo.png")
             settings_label = helper.AppXPackage.get_resource(settings_resource_path, helper.RESOURCE_SETTINGS_TITLE)
+            if not settings_label:
+                settings_label = helper.AppXPackage.get_resource(settings_resource_path, helper.RESOURCE_SETTINGS_TITLE2)
             settings_icon = self._get_icon("windows.immersivecontrolpanel", settings_icon_path)
 
             for setting in settings:
@@ -334,7 +354,7 @@ class ModernControlPanel(WindowsApps):
                         continue
 
                     catalog.append(self.create_item(
-                        category=kp.ItemCategory.URL,
+                        category=kp.ItemCategory.KEYWORD,
                         label="{}: {} ({})".format(settings_label, display_name, setting["settings_uri"]).strip(),
                         short_desc=desc if desc else "",
                         target=setting["settings_uri"],
@@ -350,3 +370,12 @@ class ModernControlPanel(WindowsApps):
         self.set_catalog(catalog)
         elapsed = time.time() - start_time
         self.info("Cataloged {} items in {:0.1f} seconds".format(len(catalog), elapsed))
+
+    def on_execute(self, item, action):
+        self.dbg("Executing (settings):", item.target(), action.name() if action else None)
+
+        if action and action.name() == self.ACTION_COPY_URL:
+            kpu.set_clipboard(item.target())
+            return
+
+        kpu.shell_execute(item.target())
